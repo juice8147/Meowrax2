@@ -1,0 +1,1611 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Smart Math &amp; Physics Problem Generator</title>
+<meta name="description" content="สุ่มโจทย์คณิตศาสตร์และฟิสิกส์ ม.1–ม.6 พร้อมเฉลยทีละขั้น วินิจฉัยจุดที่ผิด และปรับความยากตามจุดอ่อน">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f7fb; --surface:#ffffff; --surface-2:#eef2f8; --text:#0f172a; --muted:#475569; --border:#d9e1ec;
+  --primary:#4338ca; --primary-hover:#3730a3; --primary-ink:#ffffff; --primary-soft:#e0e7ff;
+  --math:#0369a1; --math-soft:#e0f2fe; --phys:#c2410c; --phys-soft:#ffedd5;
+  --ok:#15803d; --ok-bg:#dcfce7; --err:#b91c1c; --err-bg:#fee2e2; --warn:#92400e; --warn-bg:#fef3c7; --info:#1e40af; --info-bg:#dbeafe;
+  --diagram-fill:#e0e7ff; --shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06);
+  --radius:16px; --font:'IBM Plex Sans Thai',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1120; --surface:#111a2e; --surface-2:#18233b; --text:#e2e8f0; --muted:#a3b1c6; --border:#26324a;
+    --primary:#818cf8; --primary-hover:#a5b4fc; --primary-ink:#0b1120; --primary-soft:#1e2550;
+    --math:#38bdf8; --math-soft:#0c2a3d; --phys:#fb923c; --phys-soft:#3a1f0d;
+    --ok:#4ade80; --ok-bg:#0f2e1d; --err:#f87171; --err-bg:#3b1414; --warn:#fbbf24; --warn-bg:#33290a; --info:#93c5fd; --info-bg:#132447;
+    --diagram-fill:#1e2550; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1120; --surface:#111a2e; --surface-2:#18233b; --text:#e2e8f0; --muted:#a3b1c6; --border:#26324a;
+  --primary:#818cf8; --primary-hover:#a5b4fc; --primary-ink:#0b1120; --primary-soft:#1e2550;
+  --math:#38bdf8; --math-soft:#0c2a3d; --phys:#fb923c; --phys-soft:#3a1f0d;
+  --ok:#4ade80; --ok-bg:#0f2e1d; --err:#f87171; --err-bg:#3b1414; --warn:#fbbf24; --warn-bg:#33290a; --info:#93c5fd; --info-bg:#132447;
+  --diagram-fill:#1e2550; --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:16px;line-height:1.6}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--primary);outline-offset:2px;border-radius:8px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+svg.i{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* header */
+.app-bar{position:sticky;top:0;z-index:10;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.app-bar .inner{max-width:1440px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.logo{width:40px;height:40px;border-radius:12px;background:var(--primary);color:var(--primary-ink);display:grid;place-items:center;flex:none}
+.brand h1{font-size:1.05rem;margin:0;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand p{margin:0;font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--border);background:var(--surface);display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 12px;cursor:pointer;font-weight:600;font-size:.9rem;transition:background .15s,border-color .15s}
+.icon-btn:hover{background:var(--surface-2)}
+
+/* layout */
+.layout{max-width:1440px;margin:0 auto;padding:16px;display:grid;gap:16px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:860px){.layout{grid-template-columns:290px minmax(0,1fr)} #insights{grid-column:1 / -1}}
+@media (min-width:1240px){.layout{grid-template-columns:290px minmax(0,1fr) 330px;align-items:start} #insights{grid-column:auto} #settings,#insights{position:sticky;top:78px;max-height:calc(100vh - 94px);overflow:auto}}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+.card h2{font-size:1rem;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .i{color:var(--primary)}
+fieldset{border:0;padding:0;margin:0 0 18px;min-width:0}
+legend{font-weight:600;font-size:.9rem;margin-bottom:8px;padding:0;color:var(--text)}
+.hint-text{font-size:.8rem;color:var(--muted)}
+
+/* toggles */
+.chip-row{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:500;display:inline-flex;align-items:center;gap:6px;transition:background .15s,border-color .15s,color .15s}
+.chip:hover{border-color:var(--primary)}
+.chip[aria-pressed="true"]{background:var(--primary-soft);border-color:var(--primary);color:var(--text)}
+.chip[aria-pressed="true"]::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.chip.grade{min-width:52px;justify-content:center;padding:0 10px}
+.chip.grade[aria-pressed="true"]::before{display:none}
+.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;background:var(--surface-2);padding:4px;border-radius:12px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{min-height:40px;display:flex;align-items:center;justify-content:center;border-radius:9px;cursor:pointer;font-size:.9rem;font-weight:500;text-align:center;padding:0 6px;transition:background .15s}
+.seg input:checked+label{background:var(--surface);box-shadow:var(--shadow);color:var(--primary);font-weight:700}
+.seg input:focus-visible+label{outline:3px solid var(--primary);outline-offset:1px}
+.topic-tools{display:flex;gap:12px;margin-bottom:6px}
+.link-btn{background:none;border:0;color:var(--primary);cursor:pointer;font-weight:600;font-size:.85rem;padding:8px 0;min-height:36px}
+.topic-list{display:flex;flex-direction:column;gap:2px;max-height:none}
+.topic-item{display:flex;align-items:center;gap:10px;min-height:40px;padding:4px 8px;border-radius:10px;cursor:pointer}
+.topic-item:hover{background:var(--surface-2)}
+.topic-item input{width:18px;height:18px;accent-color:var(--primary);flex:none}
+.topic-item .tg{margin-left:auto;font-size:.75rem;color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.math{background:var(--math)} .dot.physics{background:var(--phys)}
+.switch{display:flex;align-items:center;gap:12px;cursor:pointer;min-height:44px}
+.switch input{position:absolute;opacity:0}
+.switch .track{width:44px;height:26px;border-radius:999px;background:var(--border);position:relative;flex:none;transition:background .2s}
+.switch .track::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.switch input:checked+.track{background:var(--primary)}
+.switch input:checked+.track::after{transform:translateX(18px)}
+.switch input:focus-visible+.track{outline:3px solid var(--primary);outline-offset:2px}
+
+/* problem */
+.workspace{display:flex;flex-direction:column;gap:16px;min-width:0}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:10px}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--surface-2);color:var(--text)}
+.badge.math{background:var(--math-soft);color:var(--math)} .badge.physics{background:var(--phys-soft);color:var(--phys)}
+.badge.lv1{background:var(--ok-bg);color:var(--ok)} .badge.lv2{background:var(--warn-bg);color:var(--warn)} .badge.lv3{background:var(--err-bg);color:var(--err)}
+.reason{font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:6px;margin:0 0 12px}
+.reason .i{width:16px;height:16px;color:var(--primary)}
+.question{font-size:1.2rem;line-height:1.75;margin:0 0 6px;overflow-wrap:anywhere}
+.note{font-size:.88rem;color:var(--muted);margin:0 0 12px}
+.ex{font-family:var(--mono);font-size:.95em;background:var(--surface-2);padding:1px 6px;border-radius:6px;white-space:nowrap}
+.eqs{display:inline-flex;flex-direction:column;gap:4px;margin:6px 0}
+.diagram{margin:8px 0 14px;background:var(--surface-2);border-radius:12px;padding:8px;display:flex;justify-content:center}
+.diagram:empty{display:none}
+.diagram svg{width:100%;max-width:420px;height:auto}
+.diagram text{fill:var(--text);font-family:var(--mono);font-size:14px}
+.d-shape{fill:var(--diagram-fill);stroke:var(--primary);stroke-width:2.5;stroke-linejoin:round}
+.d-line{stroke:var(--muted);stroke-width:2;fill:none}
+.d-wire{stroke:var(--text);stroke-width:2.5;fill:none}
+.d-path{stroke:var(--primary);stroke-width:2.5;fill:none;stroke-dasharray:6 6}
+.d-fill{fill:var(--diagram-fill);stroke:var(--primary);stroke-width:2}
+.d-res{fill:var(--surface);stroke:var(--text);stroke-width:2.5}
+.d-cover{fill:var(--surface-2)}
+.d-accent{fill:var(--phys)!important;font-weight:600}
+.d-dot{fill:var(--phys)}
+.d-arrow{stroke:var(--phys);stroke-width:2.5;fill:none}
+.answer-form{display:grid;gap:8px;margin-top:6px}
+.answer-form label.lbl{font-weight:600;font-size:.9rem}
+.answer-row{display:flex;flex-wrap:wrap;gap:8px}
+.answer-row input[type=text]{flex:1 1 180px;min-width:0;min-height:48px;padding:0 14px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);font-family:var(--mono);font-size:1.1rem}
+.answer-row input[type=text]:focus{border-color:var(--primary);outline:none;box-shadow:0 0 0 3px var(--primary-soft)}
+.answer-row input[aria-invalid="true"]{border-color:var(--err)}
+.answer-row select{min-height:48px;padding:0 12px;border-radius:12px;border:1.5px solid var(--border);background:var(--surface);flex:0 1 140px;min-width:110px}
+.suffix{align-self:center;color:var(--muted);font-weight:500}
+.field-error{color:var(--err);font-size:.85rem;margin:0;min-height:0}
+.photo-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.photo-thumb,.work-photo{display:block;max-width:100%;max-height:240px;border-radius:10px;border:1px solid var(--border,currentColor);object-fit:contain}
+.work-photo{margin:8px 0}
+.self-grade{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{min-height:46px;padding:0 18px;border-radius:12px;border:1px solid var(--border);background:var(--surface);cursor:pointer;font-weight:600;display:inline-flex;align-items:center;gap:8px;justify-content:center;transition:background .15s,transform .1s,border-color .15s}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-primary{background:var(--primary);color:var(--primary-ink);border-color:var(--primary)}
+.btn-primary:hover{background:var(--primary-hover)}
+.btn.pulse{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-soft)}
+kbd{font-family:var(--mono);font-size:.7rem;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;padding:0 5px;color:var(--muted);background:var(--surface-2)}
+.btn-primary kbd{background:transparent;color:inherit;border-color:currentColor}
+
+/* feedback */
+.feedback{display:flex;flex-direction:column;gap:10px}
+.fb{border-radius:12px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;animation:rise .25s ease-out}
+.fb .i{margin-top:3px}
+.fb h3{margin:0 0 2px;font-size:1rem}
+.fb p{margin:0;font-size:.92rem}
+.fb.ok{background:var(--ok-bg);color:var(--ok)} .fb.err{background:var(--err-bg);color:var(--err)}
+.fb.warn{background:var(--warn-bg);color:var(--warn)} .fb.info{background:var(--info-bg);color:var(--info)}
+.fb .body{color:var(--text)}
+.fb .body h3{color:inherit}
+.fb.ok h3{color:var(--ok)} .fb.err h3{color:var(--err)} .fb.warn h3{color:var(--warn)} .fb.info h3{color:var(--info)}
+.solution h2 .count{margin-left:auto;font-weight:500;font-size:.85rem;color:var(--muted)}
+.steps{list-style:none;margin:0;padding:0;counter-reset:s;display:flex;flex-direction:column;gap:8px}
+.steps li{counter-increment:s;position:relative;padding:10px 12px 10px 48px;border-radius:12px;background:var(--surface-2);animation:rise .25s ease-out;overflow-wrap:anywhere}
+.steps li::before{content:counter(s);position:absolute;left:12px;top:10px;width:26px;height:26px;border-radius:50%;background:var(--primary);color:var(--primary-ink);font-size:.8rem;font-weight:700;display:grid;place-items:center}
+.steps li.flag{background:var(--err-bg)}
+.steps li.flag::before{background:var(--err);color:#fff}
+.steps li .flag-note{display:block;font-size:.8rem;font-weight:600;color:var(--err);margin-top:4px}
+.steps li.final{background:var(--ok-bg)}
+.steps li.final::before{content:"✓";background:var(--ok);color:#fff}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* insights */
+.tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.tile{background:var(--surface-2);border-radius:12px;padding:10px;text-align:center}
+.tile b{display:block;font-family:var(--mono);font-size:1.35rem;line-height:1.2}
+.tile span{font-size:.75rem;color:var(--muted)}
+.sub-h{font-size:.85rem;font-weight:700;margin:4px 0 8px;color:var(--muted);text-transform:none}
+.bars{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:10px}
+.bars li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;font-size:.85rem}
+.bars .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.bars .pct{font-family:var(--mono);font-weight:600}
+.bars .track{grid-column:1 / -1;height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bars .fill{height:100%;border-radius:99px;transition:width .4s ease}
+.bars .sub{grid-column:1 / -1;font-size:.75rem;color:var(--muted)}
+.fill.lo{background:var(--err)} .fill.mid{background:var(--warn)} .fill.hi{background:var(--ok)}
+.mk-list{list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:8px}
+.mk-list li{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:.85rem}
+.mk-list .row{display:flex;gap:8px;align-items:baseline}
+.mk-list b{font-weight:600}
+.mk-list .n{margin-left:auto;font-family:var(--mono);font-weight:700;color:var(--err)}
+.mk-list p{margin:2px 0 0;color:var(--muted);font-size:.8rem}
+.empty{font-size:.85rem;color:var(--muted);background:var(--surface-2);border-radius:10px;padding:12px;margin:0 0 16px}
+.ins-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ins-actions .btn{flex:1 1 140px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:600;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:calc(100vw - 32px);text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%)}
+footer{max-width:1440px;margin:0 auto;padding:0 16px 24px;color:var(--muted);font-size:.8rem;text-align:center}
+@media (max-width:520px){.brand p{display:none}.question{font-size:1.08rem}.btn{flex:1 1 auto}.icon-btn .lbl{display:none}}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="ic-logo" viewBox="0 0 24 24"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 15c2-6 4-8 6-8s3 3 5 3"/><circle cx="18" cy="10" r="1.5"/></symbol>
+    <symbol id="ic-lang" viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></symbol>
+    <symbol id="ic-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="ic-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="ic-sliders" viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="ic-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+    <symbol id="ic-bulb" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6M10 22h4"/></symbol>
+    <symbol id="ic-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="ic-next" viewBox="0 0 24 24"><path d="M5 12h14M12 5l7 7-7 7"/></symbol>
+    <symbol id="ic-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+    <symbol id="ic-reset" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 16v-4M12 16V8M17 16v-7"/></symbol>
+    <symbol id="ic-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/></symbol>
+    <symbol id="ic-spark" viewBox="0 0 24 24"><path d="M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z"/></symbol>
+    <symbol id="ic-camera" viewBox="0 0 24 24"><path d="M14.5 4h-5L8 6H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="ic-list"viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  </defs>
+</svg>
+
+<header class="app-bar">
+  <div class="inner">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg class="i"><use href="#ic-logo"/></svg></div>
+      <div style="min-width:0">
+        <h1>Smart Math &amp; Physics Problem Generator</h1>
+        <p data-i18n="tagline"></p>
+      </div>
+    </div>
+    <button class="icon-btn" id="langBtn" type="button"><svg class="i" aria-hidden="true"><use href="#ic-lang"/></svg><span id="langLbl">EN</span></button>
+    <button class="icon-btn" id="themeBtn" type="button"><svg class="i" aria-hidden="true"><use id="themeIcon" href="#ic-moon"/></svg></button>
+  </div>
+</header>
+
+<main class="layout">
+  <!-- Settings -->
+  <aside class="card" id="settings" aria-labelledby="setH">
+    <h2 id="setH"><svg class="i" aria-hidden="true"><use href="#ic-sliders"/></svg><span data-i18n="settings"></span></h2>
+    <fieldset>
+      <legend data-i18n="subject"></legend>
+      <div class="chip-row" id="subjects"></div>
+    </fieldset>
+    <fieldset>
+      <legend data-i18n="grade"></legend>
+      <div class="chip-row" id="grades"></div>
+    </fieldset>
+    <fieldset>
+      <legend data-i18n="difficulty"></legend>
+      <div class="seg" id="diffSeg"></div>
+      <p class="hint-text" data-i18n="autoHelp" style="margin:6px 0 0"></p>
+    </fieldset>
+    <fieldset>
+      <legend data-i18n="topics"></legend>
+      <div class="topic-tools">
+        <button type="button" class="link-btn" id="allTopics" data-i18n="selectAll"></button>
+        <button type="button" class="link-btn" id="noTopics" data-i18n="clearAll"></button>
+      </div>
+      <div class="topic-list" id="topicList"></div>
+    </fieldset>
+    <label class="switch">
+      <input type="checkbox" id="weakToggle">
+      <span class="track" aria-hidden="true"></span>
+      <span><b data-i18n="weakMode"></b><br><span class="hint-text" data-i18n="weakHelp"></span></span>
+    </label>
+  </aside>
+
+  <!-- Workspace -->
+  <section class="workspace" aria-label="workspace">
+    <article class="card" id="problemCard" aria-labelledby="qText">
+      <div class="meta" id="meta"></div>
+      <p class="reason" id="reason"></p>
+      <div class="question" id="qText"></div>
+      <p class="note" id="qNote"></p>
+      <div class="diagram" id="diagram"></div>
+      <form class="answer-form" id="answerForm" novalidate>
+        <label class="lbl" for="answerInput" data-i18n="yourAnswer"></label>
+        <div class="answer-row">
+          <input type="text" id="answerInput" inputmode="decimal" autocomplete="off" spellcheck="false" aria-describedby="answerHelp answerErr">
+          <label for="unitSelect" class="sr-only" data-i18n="unit"></label>
+          <select id="unitSelect" hidden></select>
+          <span class="suffix" id="suffix"></span>
+          <button type="submit" class="btn btn-primary" id="submitBtn"><svg class="i" aria-hidden="true"><use href="#ic-check"/></svg><span data-i18n="submit"></span> <kbd>Enter</kbd></button>
+        </div>
+        <p class="hint-text" id="answerHelp" data-i18n="inputHelp" style="margin:0"></p>
+        <div class="photo-row">
+          <input type="file" id="photoInput" accept="image/*" capture="environment" class="sr-only" tabindex="-1" aria-hidden="true">
+          <button type="button" class="btn" id="photoBtn"><svg class="i" aria-hidden="true"><use href="#ic-camera"/></svg><span data-i18n="attachPhoto"></span></button>
+          <button type="button" class="btn" id="photoRemoveBtn" hidden><svg class="i" aria-hidden="true"><use href="#ic-x"/></svg><span data-i18n="removePhoto"></span></button>
+          <span class="hint-text" id="photoHelp" data-i18n="photoHelp"></span>
+        </div>
+        <div id="photoThumb" hidden></div>
+        <p class="field-error" id="answerErr" role="alert"></p>
+      </form>
+      <div class="actions">
+        <button type="button" class="btn" id="hintBtn"><svg class="i" aria-hidden="true"><use href="#ic-bulb"/></svg><span data-i18n="hint"></span> <kbd>H</kbd></button>
+        <button type="button" class="btn" id="solBtn"><svg class="i" aria-hidden="true"><use href="#ic-book"/></svg><span data-i18n="showSolution"></span></button>
+        <button type="button" class="btn" id="nextBtn"><span data-i18n="next"></span><svg class="i" aria-hidden="true"><use href="#ic-next"/></svg> <kbd>N</kbd></button>
+      </div>
+    </article>
+
+    <div class="feedback" id="feedback" aria-live="polite"></div>
+
+    <section class="card solution" id="solution" hidden aria-labelledby="solH">
+      <h2 id="solH"><svg class="i" aria-hidden="true"><use href="#ic-list"/></svg><span data-i18n="solution"></span><span class="count" id="stepCount"></span></h2>
+      <div id="solPhoto"></div>
+      <ol class="steps" id="steps"></ol>
+      <div class="actions">
+        <button type="button" class="btn" id="stepBtn"><span data-i18n="nextStep"></span><svg class="i" aria-hidden="true"><use href="#ic-next"/></svg></button>
+        <button type="button" class="btn" id="allStepsBtn" data-i18n="showAll"></button>
+      </div>
+    </section>
+  </section>
+
+  <!-- Insights -->
+  <aside class="card" id="insights" aria-labelledby="insH">
+    <h2 id="insH"><svg class="i" aria-hidden="true"><use href="#ic-chart"/></svg><span data-i18n="insights"></span></h2>
+    <div class="tiles" id="tiles"></div>
+    <h3 class="sub-h" data-i18n="byTopic"></h3>
+    <div id="bars"></div>
+    <h3 class="sub-h" data-i18n="commonMistakes"></h3>
+    <div id="mistakes"></div>
+    <div class="ins-actions">
+      <button type="button" class="btn btn-primary" id="weakBtn"><svg class="i" aria-hidden="true"><use href="#ic-target"/></svg><span data-i18n="practiceWeak"></span></button>
+      <button type="button" class="btn" id="resetBtn"><svg class="i" aria-hidden="true"><use href="#ic-reset"/></svg><span data-i18n="reset"></span></button>
+    </div>
+  </aside>
+</main>
+<footer data-i18n="footer"></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+'use strict';
+// @gen-start
+/* ---------- helpers ---------- */
+const L = (th, en) => ({ th, en: en ?? th });
+const ri = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const nz = (a, b, ex = [0]) => { let x; do { x = ri(a, b); } while (ex.includes(x)); return x; };
+const r2 = (x, d = 2) => Math.round(x * 10 ** d) / 10 ** d;
+const gcd = (a, b) => { a = Math.abs(a); b = Math.abs(b); while (b) [a, b] = [b, a % b]; return a || 1; };
+const lcm = (a, b) => Math.abs(a * b) / gcd(a, b);
+const n2s = n => (n < 0 ? '−' + (-n) : '' + n);
+const neg = n => (n < 0 ? `(−${-n})` : '' + n);
+const sg = n => (n < 0 ? `− ${-n}` : `+ ${n}`);
+const fmt = (x, d = 3) => { if (!isFinite(x)) return '—'; let v = Math.round(x * 10 ** d) / 10 ** d; if (Object.is(v, -0)) v = 0; return n2s(v); };
+const fracStr = (n, d) => { if (d < 0) { n = -n; d = -d; } const g = gcd(n, d); n /= g; d /= g; return d === 1 ? n2s(n) : `${n2s(n)}/${d}`; };
+const ex = s => `<span class="ex">${s}</span>`;
+const sup = p => `<sup>${p}</sup>`;
+// polynomial from [[coef, power], ...] high → low
+function poly(cs, v = 'x') {
+  let out = '';
+  for (const [c, p] of cs) {
+    if (c === 0) continue;
+    const a = Math.abs(c);
+    const body = p === 0 ? `${a}` : `${a === 1 ? '' : a}${v}${p > 1 ? sup(p) : ''}`;
+    out += out === '' ? (c < 0 ? '−' : '') + body : (c < 0 ? ` − ${body}` : ` + ${body}`);
+  }
+  return out || '0';
+}
+const G_ = 10; // gravity used in problems
+
+/* ---------- mistake catalogue ---------- */
+const MISTAKES = {
+  'fraction-add': { label: L('บวกเศษกับเศษ ส่วนกับส่วนตรง ๆ', 'Added numerators and denominators directly'), tip: L('ต้องทำตัวส่วนให้เท่ากันก่อน แล้วจึงบวก/ลบเฉพาะตัวเศษ', 'Make a common denominator first, then add/subtract numerators only') },
+  'fraction-div': { label: L('หารเศษส่วนผิดวิธี', 'Divided fractions incorrectly'), tip: L('การหารด้วยเศษส่วน = คูณด้วย “ส่วนกลับของตัวหาร” (กลับเฉพาะตัวหลัง)', 'Dividing by a fraction = multiplying by the reciprocal of the divisor only') },
+  'order-ops': { label: L('ลำดับการดำเนินการผิด', 'Wrong order of operations'), tip: L('ทำในวงเล็บ → เลขยกกำลัง → คูณ/หาร → บวก/ลบ ตามลำดับ', 'Brackets → powers → × ÷ → + −') },
+  'sign': { label: L('เครื่องหมายบวก/ลบผิด', 'Sign error'), tip: L('ลบด้วยจำนวนลบ = บวก, ตรวจเครื่องหมายทุกครั้งที่ย้ายหรือคูณ', 'Subtracting a negative = adding; re-check signs whenever you move or multiply terms') },
+  'power-as-multiply': { label: L('คิดเลขยกกำลังเป็นการคูณ', 'Treated a power as multiplication'), tip: L('c² = c × c ไม่ใช่ 2 × c', 'c² means c × c, not 2 × c') },
+  'transpose-sign': { label: L('ย้ายข้างแล้วไม่เปลี่ยนเครื่องหมาย', 'Moved a term without changing its sign'), tip: L('เมื่อย้ายพจน์ข้ามเครื่องหมาย = ต้องเปลี่ยน + เป็น − (และกลับกัน)', 'When a term crosses the = sign, + becomes − and vice versa') },
+  'inverse-op': { label: L('ใช้การดำเนินการผกผันผิด', 'Used the wrong inverse operation'), tip: L('สัมประสิทธิ์ที่คูณ x อยู่ ต้องย้ายไปเป็นตัวหาร', 'A coefficient multiplying x must be removed by dividing') },
+  'percent-final': { label: L('ตอบส่วนลดแทนราคาขาย', 'Gave the discount instead of the final price'), tip: L('อ่านโจทย์ว่าถามอะไร: ราคาขาย = ราคาเดิม − ส่วนลด', 'Check what is asked: final price = original − discount') },
+  'percent-as-number': { label: L('ลบเปอร์เซ็นต์เหมือนเป็นจำนวนเงิน', 'Subtracted the percentage as if it were money'), tip: L('r% ของ P คือ P × r/100', 'r% of P is P × r/100') },
+  'percent-chain': { label: L('คิดเปอร์เซ็นต์ต่อเนื่องผิด', 'Chained percentages incorrectly'), tip: L('เปอร์เซ็นต์ครั้งที่สองคิดจากราคาใหม่ จึงต้องคูณต่อกัน ไม่ใช่บวกกัน', 'The second percentage applies to the new price, so multiply factors instead of adding them') },
+  'square-forgot': { label: L('ลืมยกกำลังสอง', 'Forgot to square'), tip: L('ตรวจสูตรว่ามีตัวแปรยกกำลังสองหรือไม่ เช่น a² + b², v²', 'Check whether the formula squares a quantity, e.g. a² + b², v²') },
+  'sqrt-forgot': { label: L('ลืมถอดรากที่สอง', 'Forgot the square root'), tip: L('ขั้นสุดท้ายต้องถอดรากเพื่อหาค่าจริง', 'Take the square root in the final step') },
+  'pythag-leg': { label: L('หาด้านประกอบมุมฉากโดยใช้การบวก', 'Added squares when finding a leg'), tip: L('ด้านประกอบมุมฉาก: b² = c² − a² (ลบ ไม่ใช่บวก)', 'For a leg: b² = c² − a² (subtract, not add)') },
+  'exponent-rule': { label: L('ใช้กฎเลขยกกำลังผิด', 'Misapplied an exponent rule'), tip: L('ฐานเดียวกันคูณกัน → บวกเลขชี้กำลัง, หารกัน → ลบเลขชี้กำลัง', 'Same base: multiply → add exponents, divide → subtract exponents') },
+  'power-of-power': { label: L('ยกกำลังซ้อนแล้วบวกเลขชี้กำลัง', 'Added exponents for a power of a power'), tip: L('(aᵐ)ⁿ = aᵐⁿ (คูณเลขชี้กำลัง)', '(aᵐ)ⁿ = aᵐⁿ (multiply exponents)') },
+  'factor-sign': { label: L('แยกตัวประกอบแล้วเครื่องหมายรากผิด', 'Root signs flipped after factoring'), tip: L('ถ้า (x − r) = 0 จะได้ x = r (เครื่องหมายตรงข้ามกับในวงเล็บ)', 'If (x − r) = 0 then x = r — opposite to the sign in the bracket') },
+  'root-choice': { label: L('เลือกรากผิดตัว', 'Picked the wrong root'), tip: L('โจทย์ถามรากที่มีค่ามากกว่า', 'The question asks for the larger root') },
+  'formula-2a': { label: L('ลืมหารด้วย 2a', 'Forgot to divide by 2a'), tip: L('x = (−b ± √D) / 2a ตัวส่วนคือ 2a ทั้งหมด', 'x = (−b ± √D) / 2a — the whole numerator is over 2a') },
+  'discriminant': { label: L('คำนวณดิสคริมิแนนต์ผิด', 'Discriminant computed incorrectly'), tip: L('D = b² − 4ac (ระวังเครื่องหมายของ c)', 'D = b² − 4ac (watch the sign of c)') },
+  'var-swap': { label: L('ตอบค่าของตัวแปรสลับกัน', 'Swapped the variables'), tip: L('ตรวจว่าโจทย์ถามค่า x หรือ y', 'Check whether the question asks for x or y') },
+  'trig-ratio': { label: L('ใช้อัตราส่วนตรีโกณผิด', 'Wrong trig ratio'), tip: L('SOH-CAH-TOA: sin = ข้าม/ฉาก, cos = ชิด/ฉาก, tan = ข้าม/ชิด', 'SOH-CAH-TOA: sin = opp/hyp, cos = adj/hyp, tan = opp/adj') },
+  'trig-inverse': { label: L('คูณ/หารกลับด้าน', 'Multiplied where you should divide (or vice versa)'), tip: L('จัดรูปสมการ เช่น ข้าม = ฉาก × sin θ ก่อนแทนค่า', 'Rearrange first, e.g. opposite = hypotenuse × sin θ') },
+  'seq-index': { label: L('นับพจน์คลาดไปหนึ่ง', 'Off-by-one in the term index'), tip: L('พจน์ที่ n ใช้ (n − 1) ไม่ใช่ n: aₙ = a₁ + (n − 1)d, aₙ = a₁rⁿ⁻¹', 'The nth term uses (n − 1): aₙ = a₁ + (n − 1)d, aₙ = a₁rⁿ⁻¹') },
+  'half-forgot': { label: L('ลืมตัวคูณ ½ หรือ 2 ในสูตร', 'Forgot a ½ or 2 factor'), tip: L('ทวนสูตรให้ครบทุกตัวคูณ เช่น ½at², ½mv², √(2h/g), n/2', 'Recall every factor: ½at², ½mv², √(2h/g), n/2') },
+  'exponent-order': { label: L('ยกกำลังผิดตำแหน่ง', 'Applied the power to the wrong part'), tip: L('a₁rⁿ⁻¹ ยกกำลังเฉพาะ r ไม่รวม a₁', 'In a₁rⁿ⁻¹ only r is raised to the power') },
+  'prob-total': { label: L('ใช้ตัวส่วนผิดในความน่าจะเป็น', 'Wrong denominator in probability'), tip: L('P = จำนวนเหตุการณ์ที่สนใจ / จำนวนผลลัพธ์ทั้งหมด', 'P = favourable outcomes / ALL outcomes') },
+  'sample-space': { label: L('คิดว่าทุกผลรวมมีโอกาสเท่ากัน', 'Assumed every sum is equally likely'), tip: L('ทอยลูกเต๋า 2 ลูกมี 36 ผลลัพธ์ที่เท่ากัน ไม่ใช่ 11 ผลรวม', 'Two dice give 36 equally likely outcomes, not 11 sums') },
+  'replacement': { label: L('คิดแบบใส่คืนทั้งที่ไม่ใส่คืน', 'Treated "without replacement" as "with replacement"'), tip: L('หยิบครั้งที่สอง จำนวนลูกบอลลดลง 1', 'On the second draw there is one fewer ball') },
+  'derivative-eval': { label: L('แทนค่าในฟังก์ชันแทนอนุพันธ์', 'Evaluated f instead of f′'), tip: L('หา f′(x) ก่อน แล้วจึงแทนค่า x', 'Differentiate first, then substitute x') },
+  'derivative-power': { label: L('ลืมนำเลขชี้กำลังลงมาคูณ', 'Forgot to bring the exponent down'), tip: L('d/dx(axⁿ) = n·a·xⁿ⁻¹', 'd/dx(axⁿ) = n·a·xⁿ⁻¹') },
+  'derivative-exponent': { label: L('ไม่ได้ลดเลขชี้กำลังลง 1', 'Did not reduce the exponent by 1'), tip: L('หลังดิฟ เลขชี้กำลังต้องลดลง 1', 'After differentiating the exponent drops by 1') },
+  'formula': { label: L('ใช้สูตรไม่ครบ', 'Incomplete formula'), tip: L('เขียนสูตรเต็มก่อนแทนค่า และตรวจว่าทุกพจน์ถูกใช้', 'Write the full formula before substituting') },
+  'unit-convert': { label: L('ไม่ได้แปลงหน่วย', 'Units not converted'), tip: L('แปลงเป็นหน่วย SI ก่อน: km/h ÷ 3.6 = m/s, kHz × 1000 = Hz', 'Convert to SI first: km/h ÷ 3.6 = m/s, kHz × 1000 = Hz') },
+  'formula-swap': { label: L('จัดรูปสูตรกลับด้าน', 'Rearranged the formula the wrong way'), tip: L('ตรวจหน่วยของคำตอบเพื่อเช็กว่าคูณหรือหารถูกต้อง', 'Check the units of your answer to see if you should multiply or divide') },
+  'net-force': { label: L('ไม่ได้ใช้แรงลัพธ์', 'Did not use the net force'), tip: L('ΣF = ma ใช้แรงลัพธ์ที่กระทำต่อวัตถุที่พิจารณาเท่านั้น', 'ΣF = ma uses only the net force on the chosen body') },
+  'vector-direction': { label: L('ไม่คิดทิศทางของปริมาณเวกเตอร์', 'Ignored vector direction'), tip: L('กำหนดทิศบวกก่อน ความเร็ว/แรงที่สวนทางให้ติดลบ', 'Choose a positive direction; opposite velocities/forces are negative') },
+  'tension-block': { label: L('เลือกวัตถุผิดก้อนเมื่อหาแรงตึง', 'Chose the wrong block for tension'), tip: L('เชือกดึงเฉพาะก้อนด้านหลัง: T = m₂a', 'The rope pulls only the rear block: T = m₂a') },
+  'double-angle': { label: L('ใช้ sin θ แทน sin 2θ', 'Used sin θ instead of sin 2θ'), tip: L('ระยะทางแนวราบ R = u² sin 2θ / g', 'Range R = u² sin 2θ / g') },
+  'gravity-forgot': { label: L('ลืมคูณ g', 'Forgot g'), tip: L('พลังงานศักย์ Eₚ = mgh', 'Potential energy Eₚ = mgh') },
+  'mass-total': { label: L('ใช้มวลไม่ครบหลังชน', 'Used the wrong mass after collision'), tip: L('ชนแล้วติดกัน มวลรวม = m₁ + m₂', 'If they stick together, the mass is m₁ + m₂') },
+  'series-parallel': { label: L('สับสนวงจรอนุกรม/ขนาน', 'Mixed up series and parallel'), tip: L('อนุกรม: R = R₁ + R₂ + …, ขนาน: 1/R = 1/R₁ + 1/R₂ + …', 'Series: R = R₁ + R₂ + …; parallel: 1/R = 1/R₁ + 1/R₂ + …') },
+  'reciprocal-forgot': { label: L('ลืมกลับเศษเป็นส่วน', 'Forgot to take the reciprocal'), tip: L('1/R รวม ได้แล้วต้องกลับเศษส่วนอีกครั้งเพื่อได้ R', 'After finding 1/R, flip it to get R') },
+  'harmonic': { label: L('ลืมลำดับฮาร์มอนิก n', 'Forgot the harmonic number n'), tip: L('ฮาร์มอนิกที่ n: f = nv / 2L', 'nth harmonic: f = nv / 2L') },
+  'magnitude': { label: L('ตำแหน่งทศนิยม / ขนาดคลาดเคลื่อน', 'Off by a power of ten'), tip: L('ตรวจการแปลงหน่วยและตำแหน่งจุดทศนิยม', 'Check unit conversions and the decimal point') },
+  'unit-error': { label: L('ตอบหน่วยผิด', 'Wrong unit'), tip: L('หน่วยบอกชนิดของปริมาณ: แรง N, พลังงาน J, ความเร็ว m/s, ความเร่ง m/s²', 'Units identify the quantity: force N, energy J, velocity m/s, acceleration m/s²') },
+  'rate-avg': { label: L('เฉลี่ยเวลาแทนการรวมอัตราการทำงาน', 'Averaged the times instead of adding work rates'), tip: L('งานที่ทำได้ต่อวันบวกกันได้: 1/a + 1/b + … = 1/t', 'Work per day adds: 1/a + 1/b + … = 1/t') },
+  'work-remaining': { label: L('ไม่ได้หักงานที่ทำไปแล้ว', 'Ignored the work already done'), tip: L('งานที่เหลือ = 1 − (งานที่ทำแล้ว) แล้วจึงคิดเวลาที่เหลือ', 'Remaining work = 1 − work done; use that for the remaining time') },
+  'avg-conc': { label: L('เฉลี่ยความเข้มข้นตรง ๆ', 'Averaged the concentrations directly'), tip: L('ต้องถ่วงน้ำหนักด้วยปริมาตร: (V₁c₁ + V₂c₂)/(V₁ + V₂)', 'Weight by volume: (V₁c₁ + V₂c₂)/(V₁ + V₂)') },
+  'mixture-setup': { label: L('ตั้งสมการเนื้อสารผิด', 'Set up the solute balance incorrectly'), tip: L('เนื้อสารคงที่: Σ(ปริมาตร × ความเข้มข้น) ก่อนผสม = หลังผสม', 'Solute is conserved: Σ(volume × concentration) before = after') },
+  'mixture-total': { label: L('ลืมนับปริมาตรรวมหลังผสม', 'Forgot the total volume after mixing'), tip: L('ปริมาตรหลังผสม = ปริมาตรเดิม + ปริมาตรที่เติม', 'Final volume = original + added') },
+  'interest-simple': { label: L('ใช้ดอกเบี้ยเชิงเดียวแทนดอกเบี้ยทบต้น', 'Used simple interest instead of compound'), tip: L('ทบต้น: A = P(1 + r)ⁿ ดอกเบี้ยปีถัดไปคิดจากยอดใหม่', 'Compound: A = P(1 + r)ⁿ — each year earns interest on the new balance') },
+  'interest-only': { label: L('ตอบดอกเบี้ยแทนเงินรวม (หรือกลับกัน)', 'Gave interest instead of total amount (or vice versa)'), tip: L('เงินรวม = เงินต้น + ดอกเบี้ย', 'Amount = principal + interest') },
+  'interest-diff': { label: L('ลืมลบดอกเบี้ยเชิงเดียว', 'Forgot to subtract the simple interest'), tip: L('ผลต่าง = ดอกเบี้ยทบต้น − ดอกเบี้ยเชิงเดียว', 'Difference = compound interest − simple interest') },
+  'log-sum': { label: L('ใช้สมบัติลอการิทึมของการบวกผิด', 'Misapplied the log addition rule'), tip: L('log a + log b = log(ab) ไม่ใช่ log(a + b)', 'log a + log b = log(ab), not log(a + b)') },
+  'log-product': { label: L('รวมลอการิทึมผิด', 'Combined the logs incorrectly'), tip: L('log(x−c) + log(x+c) = log(x² − c²) แล้วจึงแปลงเป็นเลขยกกำลัง', 'log(x−c) + log(x+c) = log(x² − c²); then convert to a power') },
+  'counting-rule': { label: L('สับสนกฎการบวกและกฎการคูณ', 'Confused the addition and multiplication rules'), tip: L('เลือกหลายขั้นตอนต่อเนื่อง → คูณ, เลือกอย่างใดอย่างหนึ่ง → บวก', 'Successive choices multiply; either-or choices add') },
+  'perm-comb': { label: L('สับสนการจัดเรียงกับการจัดหมู่', 'Confused permutations with combinations'), tip: L('ถ้าลำดับสำคัญใช้ nPr, ถ้าไม่สำคัญใช้ nCr', 'Order matters → nPr; order does not → nCr') },
+  'ring-diff': { label: L('ลบรัศมีก่อนยกกำลังสอง', 'Subtracted radii before squaring'), tip: L('พื้นที่วงแหวน = π(R² − r²) ไม่ใช่ π(R − r)²', 'Ring area = π(R² − r²), not π(R − r)²') },
+  'sd-n': { label: L('หารด้วย n − 1 แทน n', 'Divided by n − 1 instead of n'), tip: L('ประชากร: σ = √(Σ(x − μ)² / N)', 'Population SD: σ = √(Σ(x − μ)² / N)') },
+  'integral-power': { label: L('ลืมหารด้วยเลขชี้กำลังใหม่', 'Forgot to divide by the new exponent'), tip: L('∫xⁿ dx = xⁿ⁺¹/(n+1)', '∫xⁿ dx = xⁿ⁺¹/(n+1)') },
+  'integral-limits': { label: L('ใช้ขอบเขตการอินทิเกรตไม่ครบ', 'Used the limits incorrectly'), tip: L('∫ₐᵇ f dx = F(b) − F(a)', '∫ₐᵇ f dx = F(b) − F(a)') },
+  'integral-setup': { label: L('ตั้งพื้นที่ระหว่างเส้นโค้งผิด', 'Set up the area between curves wrongly'), tip: L('พื้นที่ = ∫(เส้นบน − เส้นล่าง) dx ระหว่างจุดตัด', 'Area = ∫(upper − lower) dx between the intersection points') },
+  'temp-avg': { label: L('เฉลี่ยอุณหภูมิโดยไม่ถ่วงน้ำหนัก', 'Averaged temperatures without weighting'), tip: L('ความร้อนที่สูญเสีย = ความร้อนที่ได้รับ: Σ mcΔT = 0', 'Heat lost = heat gained: Σ mcΔT = 0') },
+  'kelvin': { label: L('ใช้องศาเซลเซียสแทนเคลวิน', 'Used °C instead of kelvin'), tip: L('กฎแก๊สใช้อุณหภูมิสัมบูรณ์ K = °C + 273', 'Gas laws need absolute temperature: K = °C + 273') },
+  'gas-ratio': { label: L('จัดอัตราส่วนกฎแก๊สกลับด้าน', 'Inverted the gas-law ratio'), tip: L('ความดันเพิ่ม → ปริมาตรลด (บอยล์), อุณหภูมิเพิ่ม → ปริมาตรเพิ่ม (ชาร์ล)', 'Pressure up → volume down (Boyle); temperature up → volume up (Charles)') },
+};
+
+/* ---------- diagrams ---------- */
+const ARROW_DEF = '<defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" class="d-dot"/></marker></defs>';
+function svgTriangle({ base = '', vert = '', hyp = '', angle = '' }) {
+  return `<svg viewBox="0 0 360 200" role="img" aria-label="right triangle">
+  <polygon points="40,170 270,170 270,30" class="d-shape"/>
+  <polyline points="254,170 254,154 270,154" class="d-line"/>
+  <text x="155" y="192" text-anchor="middle">${base}</text>
+  <text x="280" y="105">${vert}</text>
+  <text x="145" y="86" text-anchor="end">${hyp}</text>
+  ${angle ? `<path d="M85,170 A45,45 0 0 0 78.4,146.2" class="d-arrow"/><text x="92" y="162" class="d-accent">${angle}</text>` : ''}
+  </svg>`;
+}
+function svgCliff({ h = '', u = '', R = '' }) {
+  return `<svg viewBox="0 0 360 210" role="img" aria-label="horizontal projectile from a cliff">${ARROW_DEF}
+  <line x1="10" y1="180" x2="350" y2="180" class="d-line"/>
+  <rect x="40" y="50" width="70" height="130" class="d-fill"/>
+  <line x1="24" y1="50" x2="24" y2="180" class="d-line" marker-start="url(#ah)" marker-end="url(#ah)"/>
+  <text x="30" y="40">${h}</text>
+  <path d="M110,44 Q215,44 290,180" class="d-path"/>
+  <circle cx="110" cy="44" r="7" class="d-dot"/>
+  ${u ? `<line x1="120" y1="44" x2="168" y2="44" class="d-arrow" marker-end="url(#ah)"/><text x="124" y="32" class="d-accent">${u}</text>` : ''}
+  ${R ? `<line x1="110" y1="196" x2="290" y2="196" class="d-line" marker-start="url(#ah)" marker-end="url(#ah)"/><text x="200" y="192" text-anchor="middle">${R}</text>` : ''}
+  </svg>`;
+}
+function svgAngleShot({ u = '', angle = '', R = '' }) {
+  return `<svg viewBox="0 0 360 200" role="img" aria-label="projectile launched at an angle">${ARROW_DEF}
+  <line x1="10" y1="170" x2="350" y2="170" class="d-line"/>
+  <path d="M30,170 Q180,-90 330,170" class="d-path"/>
+  <circle cx="30" cy="170" r="7" class="d-dot"/>
+  <line x1="30" y1="170" x2="80" y2="118" class="d-arrow" marker-end="url(#ah)"/>
+  <text x="70" y="104" class="d-accent">${u}</text>
+  <path d="M70,170 A40,40 0 0 0 58,141" class="d-line"/>
+  <text x="76" y="162">${angle}</text>
+  <text x="180" y="192" text-anchor="middle">${R}</text>
+  </svg>`;
+}
+function svgCircuit({ kind = 'single', V = '', R = [] }) {
+  const battery = `<rect x="28" y="88" width="24" height="24" class="d-cover"/><line x1="22" y1="94" x2="58" y2="94" class="d-wire"/><line x1="31" y1="106" x2="49" y2="106" class="d-wire" style="stroke-width:5"/><text x="62" y="105">${V}</text>`;
+  const res = (cx, cy, lbl) => `<rect x="${cx - 24}" y="${cy - 9}" width="48" height="18" rx="3" class="d-res"/><text x="${cx}" y="${cy - 16}" text-anchor="middle">${lbl}</text>`;
+  let body = '<rect x="40" y="40" width="270" height="120" class="d-wire"/>';
+  if (kind === 'single') body += res(175, 40, R[0]);
+  if (kind === 'series') body += res(110, 40, R[0]) + res(200, 40, R[1]) + `<rect x="301" y="76" width="18" height="48" rx="3" class="d-res"/><text x="300" y="148" text-anchor="end">${R[2]}</text>`;
+  if (kind === 'parallel') body += '<path d="M120,40 V100 H250 V40" class="d-wire"/>' + res(185, 40, R[0]) + res(185, 100, R[1]);
+  return `<svg viewBox="0 0 360 190" role="img" aria-label="${kind} circuit">${body}${battery}</svg>`;
+}
+
+/* ---------- generators ---------- */
+const GENERATORS = [];
+const def = g => GENERATORS.push(g);
+
+/* ===== MATH ===== */
+def({ id: 'int', subject: 'math', grades: [1], name: L('จำนวนเต็มและลำดับการคำนวณ', 'Integers & order of operations'), gen(lv) {
+  let a, b, c, expr, ans, steps, mistakes;
+  if (lv === 1) {
+    a = ri(2, 20); b = ri(2, 12); c = ri(2, 12); ans = a + b * c; expr = `${a} + ${b} × ${c}`;
+    steps = [L(`คูณก่อนบวก: ${ex(`${b} × ${c} = ${b * c}`)}`, `Multiply before adding: ${ex(`${b} × ${c} = ${b * c}`)}`), L(`${ex(`${a} + ${b * c} = ${ans}`)}`)];
+    mistakes = [{ tag: 'order-ops', value: (a + b) * c, step: 0 }];
+  } else if (lv === 2) {
+    a = ri(-20, 20); b = nz(-9, 9, [0, 1]); c = ri(2, 9); ans = a - b * c; expr = `${n2s(a)} − ${neg(b)} × ${c}`;
+    steps = [L(`คูณก่อน: ${ex(`${neg(b)} × ${c} = ${n2s(b * c)}`)}`, `Multiply first: ${ex(`${neg(b)} × ${c} = ${n2s(b * c)}`)}`),
+      L(`${ex(`${n2s(a)} − ${neg(b * c)}`)} ${b * c < 0 ? '(ลบด้วยจำนวนลบ = บวก)' : ''} = ${ex(n2s(ans))}`, `${ex(`${n2s(a)} − ${neg(b * c)}`)} ${b * c < 0 ? '(minus a negative = plus)' : ''} = ${ex(n2s(ans))}`)];
+    mistakes = [{ tag: 'order-ops', value: (a - b) * c, step: 0 }, { tag: 'sign', value: a + b * c, step: 1 }];
+  } else {
+    a = ri(10, 80); b = ri(2, 6); c = ri(3, 7); ans = a - b * c * c; expr = `${a} − ${b} × ${c}${sup(2)}`;
+    steps = [L(`เลขยกกำลังก่อน: ${ex(`${c}${sup(2)} = ${c * c}`)}`, `Powers first: ${ex(`${c}${sup(2)} = ${c * c}`)}`), L(`คูณ: ${ex(`${b} × ${c * c} = ${b * c * c}`)}`, `Multiply: ${ex(`${b} × ${c * c} = ${b * c * c}`)}`), L(`ลบ: ${ex(`${a} − ${b * c * c} = ${n2s(ans)}`)}`, `Subtract: ${ex(`${a} − ${b * c * c} = ${n2s(ans)}`)}`)];
+    mistakes = [{ tag: 'order-ops', value: (a - b) * c * c, step: 1 }, { tag: 'power-as-multiply', value: a - b * c * 2, step: 0 }, { tag: 'order-ops', value: a - (b * c) ** 2, step: 1 }];
+  }
+  return { text: L(`จงหาค่าของ ${ex(expr)}`, `Evaluate ${ex(expr)}`), answer: ans, steps, mistakes, hint: L('ลำดับ: วงเล็บ → ยกกำลัง → คูณ/หาร → บวก/ลบ', 'Order: brackets → powers → × ÷ → + −') };
+}});
+
+def({ id: 'frac', subject: 'math', grades: [1], name: L('เศษส่วน', 'Fractions'), gen(lv) {
+  const note = L('ตอบเป็นเศษส่วนอย่างต่ำ (เช่น 5/6) หรือทศนิยม', 'Answer as a fraction in lowest terms (e.g. 5/6) or a decimal');
+  if (lv < 3) {
+    const b = ri(2, lv === 1 ? 6 : 10), d = nz(2, lv === 1 ? 6 : 10, [b]), a = ri(1, b - 1), c = ri(1, d - 1), op = lv === 1 ? 1 : pick([1, -1]);
+    const m = lcm(b, d), A = a * m / b, C = c * m / d, N = A + op * C, o = op > 0 ? '+' : '−';
+    const mistakes = [];
+    if (b + op * d !== 0) mistakes.push({ tag: 'fraction-add', value: (a + op * c) / (b + op * d), step: 0 });
+    return { text: L(`จงหาค่าของ ${ex(`${a}/${b} ${o} ${c}/${d}`)}`, `Evaluate ${ex(`${a}/${b} ${o} ${c}/${d}`)}`), note, answer: N / m, answerText: fracStr(N, m),
+      steps: [L(`ค.ร.น. ของตัวส่วน ${b} และ ${d} คือ ${m}`, `The LCM of denominators ${b} and ${d} is ${m}`),
+        L(`ทำตัวส่วนให้เท่ากัน: ${ex(`${a}/${b} = ${A}/${m}`)}, ${ex(`${c}/${d} = ${C}/${m}`)}`, `Common denominator: ${ex(`${a}/${b} = ${A}/${m}`)}, ${ex(`${c}/${d} = ${C}/${m}`)}`),
+        L(`${op > 0 ? 'บวก' : 'ลบ'}เฉพาะตัวเศษ: ${ex(`(${A} ${o} ${C})/${m} = ${n2s(N)}/${m}`)}`, `${op > 0 ? 'Add' : 'Subtract'} numerators: ${ex(`(${A} ${o} ${C})/${m} = ${n2s(N)}/${m}`)}`),
+        L(`ทำเป็นเศษส่วนอย่างต่ำ: ${ex(fracStr(N, m))}`, `Lowest terms: ${ex(fracStr(N, m))}`)],
+      mistakes, hint: L('ทำตัวส่วนให้เท่ากันก่อน แล้วค่อยบวก/ลบตัวเศษ', 'Find a common denominator before adding/subtracting') };
+  }
+  const a = ri(1, 9), b = nz(2, 9, [a]), c = ri(1, 9), d = nz(2, 9, [c]);
+  return { text: L(`จงหาค่าของ ${ex(`${a}/${b} ÷ ${c}/${d}`)}`, `Evaluate ${ex(`${a}/${b} ÷ ${c}/${d}`)}`), note, answer: (a * d) / (b * c), answerText: fracStr(a * d, b * c),
+    steps: [L(`เปลี่ยนหารเป็นคูณด้วยส่วนกลับของตัวหาร: ${ex(`${a}/${b} × ${d}/${c}`)}`, `Change ÷ to × by the reciprocal of the divisor: ${ex(`${a}/${b} × ${d}/${c}`)}`),
+      L(`คูณเศษกับเศษ ส่วนกับส่วน: ${ex(`${a * d}/${b * c}`)}`, `Multiply across: ${ex(`${a * d}/${b * c}`)}`), L(`อย่างต่ำ: ${ex(fracStr(a * d, b * c))}`, `Lowest terms: ${ex(fracStr(a * d, b * c))}`)],
+    mistakes: [{ tag: 'fraction-div', value: (a * c) / (b * d), step: 0 }, { tag: 'fraction-div', value: (b * c) / (a * d), step: 0 }],
+    hint: L('หารด้วยเศษส่วน = คูณด้วยส่วนกลับ', 'Divide by a fraction = multiply by its reciprocal') };
+}});
+
+def({ id: 'linear', subject: 'math', grades: [1, 2], name: L('สมการเชิงเส้นตัวแปรเดียว', 'Linear equations'), gen(lv) {
+  const x = ri(-10, 10);
+  if (lv < 3) {
+    const a = lv === 1 ? ri(2, 9) : nz(-9, 9, [0, 1, -1]), b = nz(-20, 20), c = a * x + b;
+    const mistakes = [{ tag: 'transpose-sign', value: (c + b) / a, step: 0 }, { tag: 'inverse-op', value: (c - b) * a, step: 1 }];
+    if (lv === 2) mistakes.push({ tag: 'sign', value: -x, step: 1 });
+    return { text: L(`จงแก้สมการ ${ex(`${poly([[a, 1], [b, 0]])} = ${n2s(c)}`)} หาค่า x`, `Solve ${ex(`${poly([[a, 1], [b, 0]])} = ${n2s(c)}`)} for x`), answer: x,
+      steps: [L(`ย้าย ${ex(sg(b))} ไปอีกข้าง (เปลี่ยนเครื่องหมาย): ${ex(`${poly([[a, 1]])} = ${n2s(c)} ${sg(-b)} = ${n2s(c - b)}`)}`, `Move ${ex(sg(b))} across (change sign): ${ex(`${poly([[a, 1]])} = ${n2s(c)} ${sg(-b)} = ${n2s(c - b)}`)}`),
+        L(`หารด้วย ${neg(a)} ทั้งสองข้าง: ${ex(`x = ${n2s(c - b)} ÷ ${neg(a)} = ${n2s(x)}`)}`, `Divide both sides by ${neg(a)}: ${ex(`x = ${n2s(c - b)} ÷ ${neg(a)} = ${n2s(x)}`)}`)],
+      mistakes, hint: L('ย้ายค่าคงที่ไปอีกข้างก่อน แล้วหารด้วยสัมประสิทธิ์ของ x', 'Move the constant first, then divide by the coefficient of x') };
+  }
+  const a = ri(2, 9), d = nz(-6, 9, [0, a]), b = nz(-15, 15), e = (a - d) * x + b;
+  const mistakes = [{ tag: 'transpose-sign', value: (e - b) / (a + d), step: 0 }, { tag: 'transpose-sign', value: (e + b) / (a - d), step: 0 }];
+  return { text: L(`จงแก้สมการ ${ex(`${poly([[a, 1], [b, 0]])} = ${poly([[d, 1], [e, 0]])}`)} หาค่า x`, `Solve ${ex(`${poly([[a, 1], [b, 0]])} = ${poly([[d, 1], [e, 0]])}`)} for x`), answer: x,
+    steps: [L(`ย้ายพจน์ x มาซ้าย ค่าคงที่ไปขวา: ${ex(`${poly([[a, 1]])} ${d < 0 ? '+' : '−'} ${poly([[Math.abs(d), 1]])} = ${n2s(e)} ${sg(-b)}`)}`, `x-terms left, constants right: ${ex(`${poly([[a, 1]])} ${d < 0 ? '+' : '−'} ${poly([[Math.abs(d), 1]])} = ${n2s(e)} ${sg(-b)}`)}`),
+      L(`รวมพจน์: ${ex(`${poly([[a - d, 1]])} = ${n2s(e - b)}`)}`, `Combine: ${ex(`${poly([[a - d, 1]])} = ${n2s(e - b)}`)}`), L(`${ex(`x = ${n2s(e - b)} ÷ ${neg(a - d)} = ${n2s(x)}`)}`)],
+    mistakes, hint: L('รวมพจน์ที่มี x ไว้ข้างเดียวกัน (อย่าลืมเปลี่ยนเครื่องหมายเมื่อย้ายข้าง)', 'Collect x-terms on one side — change signs when moving terms') };
+}});
+
+def({ id: 'percent', subject: 'math', grades: [1, 2], name: L('ร้อยละ', 'Percentages'), gen(lv) {
+  const P = ri(4, 40) * 50, r = pick([10, 15, 20, 25, 30, 40]);
+  const suffix = L('บาท', 'baht');
+  if (lv === 1) {
+    const ans = P * (1 - r / 100);
+    return { text: L(`เสื้อตัวหนึ่งราคา ${ex(P)} บาท ลดราคา ${ex(r + '%')} ราคาขายเป็นเท่าไร`, `A shirt costs ${ex(P)} baht and is ${ex(r + '%')} off. What is the sale price?`), suffix, answer: ans,
+      steps: [L(`ส่วนลด = ${ex(`${P} × ${r}/100 = ${fmt(P * r / 100)}`)} บาท`, `Discount = ${ex(`${P} × ${r}/100 = ${fmt(P * r / 100)}`)} baht`), L(`ราคาขาย = ${ex(`${P} − ${fmt(P * r / 100)} = ${fmt(ans)}`)} บาท`, `Sale price = ${ex(`${P} − ${fmt(P * r / 100)} = ${fmt(ans)}`)} baht`)],
+      mistakes: [{ tag: 'percent-final', value: P * r / 100, step: 1 }, { tag: 'percent-as-number', value: P - r, step: 0 }], hint: L('ส่วนลด = ราคา × r/100 แล้วนำไปลบออก', 'Discount = price × r/100, then subtract it') };
+  }
+  if (lv === 2) {
+    const s = P * (1 - r / 100), ans = r2(s * 1.07);
+    return { text: L(`สินค้าราคา ${ex(P)} บาท ลด ${ex(r + '%')} แล้วคิดภาษีมูลค่าเพิ่ม ${ex('7%')} จากราคาหลังลด ต้องจ่ายเท่าไร`, `An item costs ${ex(P)} baht, is ${ex(r + '%')} off, then 7% VAT is added on the discounted price. How much do you pay?`), suffix, answer: ans,
+      steps: [L(`ราคาหลังลด = ${ex(`${P} × ${fmt(1 - r / 100)} = ${fmt(s)}`)}`, `After discount = ${ex(`${P} × ${fmt(1 - r / 100)} = ${fmt(s)}`)}`), L(`บวก VAT 7%: ${ex(`${fmt(s)} × 1.07`)}`, `Add 7% VAT: ${ex(`${fmt(s)} × 1.07`)}`), L(`${ex(`= ${fmt(ans, 2)}`)} บาท`, `${ex(`= ${fmt(ans, 2)}`)} baht`)],
+      mistakes: [{ tag: 'percent-chain', value: r2(P * (1 - r / 100 + 0.07)), step: 1 }, { tag: 'percent-final', value: s, step: 1 }], hint: L('คิดทีละขั้น: ลดราคาก่อน แล้วคูณ 1.07', 'Step by step: discount first, then multiply by 1.07') };
+  }
+  const ans = r2(P * (1 + r / 100) * (1 - r / 100));
+  return { text: L(`ร้านขึ้นราคาสินค้า ${ex(P)} บาท อีก ${ex(r + '%')} ต่อมาลดราคาลง ${ex(r + '%')} จากราคาใหม่ ราคาสุดท้ายเป็นเท่าไร`, `A ${ex(P)}-baht item is raised by ${ex(r + '%')}, then reduced by ${ex(r + '%')} of the new price. What is the final price?`), suffix, answer: ans,
+    steps: [L(`ขึ้นราคา: ${ex(`${P} × ${fmt(1 + r / 100)} = ${fmt(P * (1 + r / 100))}`)}`, `Increase: ${ex(`${P} × ${fmt(1 + r / 100)} = ${fmt(P * (1 + r / 100))}`)}`), L(`ลดราคา: ${ex(`${fmt(P * (1 + r / 100))} × ${fmt(1 - r / 100)}`)}`, `Decrease: ${ex(`${fmt(P * (1 + r / 100))} × ${fmt(1 - r / 100)}`)}`), L(`${ex(`= ${fmt(ans, 2)}`)} บาท (ไม่เท่ากับราคาเดิม เพราะฐานต่างกัน)`, `${ex(`= ${fmt(ans, 2)}`)} baht (not the original — the bases differ)`)],
+    mistakes: [{ tag: 'percent-chain', value: P, step: 2 }], hint: L('เปอร์เซ็นต์ที่สองคิดจากราคาใหม่', 'The second percentage uses the new price') };
+}});
+
+def({ id: 'expo', subject: 'math', grades: [1, 2, 3], name: L('เลขยกกำลัง', 'Exponents'), gen(lv) {
+  const base = pick(['a', 'x', '2', '5']);
+  const note = L('ตอบเฉพาะเลขชี้กำลัง', 'Enter the exponent only');
+  if (lv === 1) {
+    const m = ri(2, 9), n = nz(2, 9, [2]);
+    return { text: L(`${ex(`${base}${sup(m)} × ${base}${sup(n)} = ${base}${sup('?')}`)}`), note, answer: m + n,
+      steps: [L('ฐานเดียวกันคูณกัน ให้นำเลขชี้กำลังมาบวกกัน', 'Same base multiplied → add the exponents'), L(`${ex(`${m} + ${n} = ${m + n}`)} ดังนั้นได้ ${ex(`${base}${sup(m + n)}`)}`, `${ex(`${m} + ${n} = ${m + n}`)} so ${ex(`${base}${sup(m + n)}`)}`)],
+      mistakes: [{ tag: 'exponent-rule', value: m * n, step: 0 }], hint: L('aᵐ × aⁿ = aᵐ⁺ⁿ') };
+  }
+  if (lv === 2) {
+    const m = ri(2, 9), n = ri(2, 9), k = ri(2, 12);
+    return { text: L(`${ex(`${base}${sup(m)} × ${base}${sup(n)} ÷ ${base}${sup(k)} = ${base}${sup('?')}`)}`), note, answer: m + n - k,
+      steps: [L(`คูณ → บวกเลขชี้กำลัง: ${ex(`${m} + ${n} = ${m + n}`)}`, `Multiply → add: ${ex(`${m} + ${n} = ${m + n}`)}`), L(`หาร → ลบเลขชี้กำลัง: ${ex(`${m + n} − ${k} = ${n2s(m + n - k)}`)}`, `Divide → subtract: ${ex(`${m + n} − ${k} = ${n2s(m + n - k)}`)}`)],
+      mistakes: [{ tag: 'exponent-rule', value: m + n + k, step: 1 }, { tag: 'exponent-rule', value: m * n - k, step: 0 }], hint: L('aᵐ ÷ aⁿ = aᵐ⁻ⁿ (เลขชี้กำลังติดลบได้)', 'aᵐ ÷ aⁿ = aᵐ⁻ⁿ (can be negative)') };
+  }
+  let m, n; do { m = ri(2, 5); n = ri(2, 5); } while (m * n === m + n);
+  const k = ri(1, 8), j = ri(1, 9);
+  return { text: L(`${ex(`(${base}${sup(m)})${sup(n)} × ${base}${sup(k)} ÷ ${base}${sup(j)} = ${base}${sup('?')}`)}`), note, answer: m * n + k - j,
+    steps: [L(`ยกกำลังซ้อน → คูณเลขชี้กำลัง: ${ex(`${m} × ${n} = ${m * n}`)}`, `Power of a power → multiply: ${ex(`${m} × ${n} = ${m * n}`)}`), L(`คูณ → บวก: ${ex(`${m * n} + ${k} = ${m * n + k}`)}`, `Multiply → add: ${ex(`${m * n} + ${k} = ${m * n + k}`)}`), L(`หาร → ลบ: ${ex(`${m * n + k} − ${j} = ${n2s(m * n + k - j)}`)}`, `Divide → subtract: ${ex(`${m * n + k} − ${j} = ${n2s(m * n + k - j)}`)}`)],
+    mistakes: [{ tag: 'power-of-power', value: m + n + k - j, step: 0 }, { tag: 'exponent-rule', value: m * n + k + j, step: 2 }], hint: L('(aᵐ)ⁿ = aᵐⁿ') };
+}});
+
+def({ id: 'pythag', subject: 'math', grades: [2], name: L('ทฤษฎีบทพีทาโกรัส', 'Pythagoras’ theorem'), gen(lv) {
+  const T = pick([[3, 4, 5], [5, 12, 13], [8, 15, 17], [7, 24, 25], [20, 21, 29]]), k = lv === 1 ? ri(1, 3) : ri(1, 2);
+  const unit = L('ซม.', 'cm');
+  if (lv === 2) {
+    const [a, b, c] = T.map(v => v * k);
+    return { text: L(`สามเหลี่ยมมุมฉากมีด้านตรงข้ามมุมฉากยาว ${ex(c)} ซม. และด้านประกอบมุมฉากด้านหนึ่งยาว ${ex(a)} ซม. อีกด้านยาวเท่าไร`, `A right triangle has hypotenuse ${ex(c)} cm and one leg ${ex(a)} cm. Find the other leg.`), suffix: unit, answer: b,
+      diagram: svgTriangle({ base: `${a}`, vert: '?', hyp: `${c}` }),
+      steps: [L(`${ex(`b${sup(2)} = c${sup(2)} − a${sup(2)}`)}`), L(`${ex(`b${sup(2)} = ${c * c} − ${a * a} = ${b * b}`)}`), L(`${ex(`b = √${b * b} = ${b}`)} ซม.`, `${ex(`b = √${b * b} = ${b}`)} cm`)],
+      mistakes: [{ tag: 'pythag-leg', value: r2(Math.sqrt(c * c + a * a)), step: 0 }, { tag: 'square-forgot', value: c - a, step: 0 }, { tag: 'sqrt-forgot', value: b * b, step: 2 }], hint: L('ด้านตรงข้ามมุมฉาก (c) ยาวที่สุดเสมอ', 'The hypotenuse (c) is always the longest side') };
+  }
+  let a, b, c;
+  if (lv === 1) [a, b, c] = T.map(v => v * k); else { a = ri(3, 20); b = ri(3, 20); c = r2(Math.sqrt(a * a + b * b)); }
+  return { text: L(`สามเหลี่ยมมุมฉากมีด้านประกอบมุมฉากยาว ${ex(a)} และ ${ex(b)} ซม. ด้านตรงข้ามมุมฉากยาวเท่าไร${lv === 3 ? ' (ทศนิยม 2 ตำแหน่ง)' : ''}`, `A right triangle has legs ${ex(a)} cm and ${ex(b)} cm. Find the hypotenuse${lv === 3 ? ' (2 d.p.)' : ''}.`), suffix: unit, answer: c,
+    diagram: svgTriangle({ base: `${a}`, vert: `${b}`, hyp: 'c = ?' }),
+    steps: [L(`${ex(`c${sup(2)} = a${sup(2)} + b${sup(2)}`)}`), L(`${ex(`c${sup(2)} = ${a * a} + ${b * b} = ${a * a + b * b}`)}`), L(`${ex(`c = √${a * a + b * b} = ${fmt(c, 2)}`)}`)],
+    mistakes: [{ tag: 'square-forgot', value: a + b, step: 0 }, { tag: 'sqrt-forgot', value: a * a + b * b, step: 2 }], hint: L('c² = a² + b² แล้วอย่าลืมถอดราก', 'c² = a² + b², then take the square root') };
+}});
+
+def({ id: 'system', subject: 'math', grades: [3], name: L('ระบบสมการสองตัวแปร', 'Simultaneous equations'), gen(lv) {
+  let x, y, a1, b1, a2, b2;
+  do {
+    x = ri(-8, 8); y = ri(-8, 8);
+    if (lv === 1) { a1 = 1; b1 = 1; a2 = 1; b2 = -1; }
+    else if (lv === 2) { a1 = 1; b1 = nz(-5, 5); a2 = nz(-5, 5); b2 = nz(-5, 5); }
+    else { a1 = nz(-6, 6); b1 = nz(-6, 6); a2 = nz(-6, 6); b2 = nz(-6, 6); }
+  } while (a1 * b2 - a2 * b1 === 0 || x === y || x === -x);
+  const c1 = a1 * x + b1 * y, c2 = a2 * x + b2 * y;
+  const eq = (a, b, c) => `${poly([[a, 1]], 'x')}${b < 0 ? ' − ' : ' + '}${poly([[Math.abs(b), 1]], 'y')} = ${n2s(c)}`;
+  const D = a1 * b2 - a2 * b1;
+  return { text: L(`จงหาค่า ${ex('x')} จากระบบสมการ<br><span class="eqs">${ex(eq(a1, b1, c1))}${ex(eq(a2, b2, c2))}</span>`, `Find ${ex('x')} from the system<br><span class="eqs">${ex(eq(a1, b1, c1))}${ex(eq(a2, b2, c2))}</span>`), answer: x,
+    steps: [L(`กำจัด y: คูณสมการแรกด้วย ${neg(b2)} และสมการที่สองด้วย ${neg(b1)} แล้วลบกัน`, `Eliminate y: multiply eq.1 by ${neg(b2)}, eq.2 by ${neg(b1)}, then subtract`),
+      L(`${ex(`(${a1 * b2} − ${neg(a2 * b1)})x = ${n2s(c1 * b2)} − ${neg(c2 * b1)}`)} → ${ex(`${n2s(D)}x = ${n2s(c1 * b2 - c2 * b1)}`)}`),
+      L(`${ex(`x = ${n2s(c1 * b2 - c2 * b1)} ÷ ${neg(D)} = ${n2s(x)}`)} (และ y = ${n2s(y)})`, `${ex(`x = ${n2s(c1 * b2 - c2 * b1)} ÷ ${neg(D)} = ${n2s(x)}`)} (and y = ${n2s(y)})`)],
+    mistakes: [{ tag: 'var-swap', value: y, step: 2 }, { tag: 'sign', value: -x, step: 1 }], hint: L('ทำสัมประสิทธิ์ของ y ให้เท่ากันแล้วลบสมการ', 'Match the y coefficients, then subtract the equations') };
+}});
+
+def({ id: 'quad', subject: 'math', grades: [3, 4], name: L('สมการกำลังสอง', 'Quadratic equations'), gen(lv) {
+  if (lv < 3) {
+    let r1, r2; do { r1 = nz(-9, 9); r2 = nz(-9, 9); } while (r1 === r2 || r1 === -r2);
+    const a = lv === 1 ? 1 : ri(2, 3), b = -a * (r1 + r2), c = a * r1 * r2, R = Math.max(r1, r2), m = Math.min(r1, r2);
+    const fac = `(x ${sg(-r1)})(x ${sg(-r2)})`;
+    return { text: L(`จงหารากที่มีค่ามากกว่าของสมการ ${ex(`${poly([[a, 2], [b, 1], [c, 0]])} = 0`)}`, `Find the larger root of ${ex(`${poly([[a, 2], [b, 1], [c, 0]])} = 0`)}`), answer: R,
+      steps: [...(a > 1 ? [L(`หารตลอดด้วย ${a}: ${ex(`${poly([[1, 2], [b / a, 1], [c / a, 0]])} = 0`)}`, `Divide through by ${a}: ${ex(`${poly([[1, 2], [b / a, 1], [c / a, 0]])} = 0`)}`)] : []),
+        L(`หาจำนวนสองจำนวนที่คูณกันได้ ${n2s(c / a)} และบวกกันได้ ${n2s(b / a)}: คือ ${n2s(-r1)} และ ${n2s(-r2)}`, `Two numbers with product ${n2s(c / a)} and sum ${n2s(b / a)}: ${n2s(-r1)} and ${n2s(-r2)}`),
+        L(`แยกตัวประกอบ: ${ex(`${fac} = 0`)} → ${ex(`x = ${n2s(r1)}`)} หรือ ${ex(`x = ${n2s(r2)}`)}`, `Factor: ${ex(`${fac} = 0`)} → ${ex(`x = ${n2s(r1)}`)} or ${ex(`x = ${n2s(r2)}`)}`),
+        L(`รากที่มากกว่าคือ ${ex(n2s(R))}`, `The larger root is ${ex(n2s(R))}`)],
+      mistakes: [{ tag: 'factor-sign', value: -m, step: a > 1 ? 2 : 1 }, { tag: 'root-choice', value: m, step: a > 1 ? 3 : 2 }], hint: L('แยกตัวประกอบ แล้วจับแต่ละวงเล็บเท่ากับ 0', 'Factor, then set each bracket to 0') };
+  }
+  let a, b, c, D;
+  do { a = ri(1, 3); b = ri(-9, 9); c = nz(-9, 9); D = b * b - 4 * a * c; } while (D <= 0 || Number.isInteger(Math.sqrt(D)));
+  const R = r2((-b + Math.sqrt(D)) / (2 * a)), sq = r2(Math.sqrt(D), 3);
+  const mistakes = [{ tag: 'sign', value: r2((b + Math.sqrt(D)) / (2 * a)), step: 2 }];
+  if (a > 1) mistakes.push({ tag: 'formula-2a', value: r2((-b + Math.sqrt(D)) / 2), step: 2 });
+  if (b * b + 4 * a * c > 0) mistakes.push({ tag: 'discriminant', value: r2((-b + Math.sqrt(b * b + 4 * a * c)) / (2 * a)), step: 0 });
+  return { text: L(`จงหารากที่มีค่ามากกว่าของ ${ex(`${poly([[a, 2], [b, 1], [c, 0]])} = 0`)} (ทศนิยม 2 ตำแหน่ง)`, `Find the larger root of ${ex(`${poly([[a, 2], [b, 1], [c, 0]])} = 0`)} (2 d.p.)`), answer: R,
+    steps: [L(`${ex(`D = b${sup(2)} − 4ac = ${neg(b)}${sup(2)} − 4(${a})(${n2s(c)}) = ${D}`)}`), L(`${ex(`x = (−b ± √D) / 2a = (${n2s(-b)} ± ${sq}) / ${2 * a}`)}`), L(`รากที่มากกว่า: ${ex(`(${n2s(-b)} + ${sq}) / ${2 * a} ≈ ${fmt(R, 2)}`)}`, `Larger root: ${ex(`(${n2s(-b)} + ${sq}) / ${2 * a} ≈ ${fmt(R, 2)}`)}`)],
+    mistakes, hint: L('ใช้สูตร x = (−b ± √(b² − 4ac)) / 2a', 'Use x = (−b ± √(b² − 4ac)) / 2a') };
+}});
+
+def({ id: 'trig', subject: 'math', grades: [4], name: L('อัตราส่วนตรีโกณมิติ', 'Trigonometric ratios'), gen(lv) {
+  const rad = d => d * Math.PI / 180, unit = L('ซม.', 'cm');
+  if (lv < 3) {
+    const th = lv === 1 ? 30 : ri(20, 70), h = lv === 1 ? ri(2, 15) * 2 : ri(5, 30), ans = r2(h * Math.sin(rad(th)));
+    return { text: L(`สามเหลี่ยมมุมฉากมีด้านตรงข้ามมุมฉากยาว ${ex(h)} ซม. และมุม ${ex(`θ = ${th}°`)} จงหาความยาวด้านตรงข้ามมุม θ${lv === 2 ? ' (ทศนิยม 2 ตำแหน่ง)' : ''}`, `A right triangle has hypotenuse ${ex(h)} cm and angle ${ex(`θ = ${th}°`)}. Find the side opposite θ${lv === 2 ? ' (2 d.p.)' : ''}.`), suffix: unit, answer: ans,
+      diagram: svgTriangle({ base: '', vert: '?', hyp: `${h}`, angle: `${th}°` }),
+      steps: [L(`${ex('sin θ = ข้าม / ฉาก')} → ${ex('ข้าม = ฉาก × sin θ')}`, `${ex('sin θ = opp / hyp')} → ${ex('opp = hyp × sin θ')}`), L(`${ex(`= ${h} × sin ${th}° = ${h} × ${fmt(Math.sin(rad(th)), 4)}`)}`), L(`${ex(`≈ ${fmt(ans, 2)}`)} ซม.`, `${ex(`≈ ${fmt(ans, 2)}`)} cm`)],
+      mistakes: [{ tag: 'trig-ratio', value: r2(h * Math.cos(rad(th))), step: 0 }, { tag: 'trig-ratio', value: r2(h * Math.tan(rad(th))), step: 0 }, { tag: 'trig-inverse', value: r2(h / Math.sin(rad(th))), step: 0 }], hint: L('ด้านตรงข้ามกับด้านตรงข้ามมุมฉาก → ใช้ sin', 'Opposite & hypotenuse → use sin') };
+  }
+  const th = ri(20, 70), adj = ri(5, 30), ans = r2(adj * Math.tan(rad(th)));
+  return { text: L(`บันไดพาดกำแพง ฐานบันไดห่างกำแพง ${ex(adj)} ซม. ทำมุม ${ex(`${th}°`)} กับพื้น จุดที่บันไดแตะกำแพงสูงเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A ladder's foot is ${ex(adj)} cm from a wall and makes ${ex(`${th}°`)} with the ground. How high up the wall does it reach? (2 d.p.)`), suffix: unit, answer: ans,
+    diagram: svgTriangle({ base: `${adj}`, vert: '?', hyp: '', angle: `${th}°` }),
+    steps: [L(`รู้ด้านชิด หาด้านข้าม → ${ex('tan θ = ข้าม / ชิด')}`, `Know adjacent, want opposite → ${ex('tan θ = opp / adj')}`), L(`${ex(`ข้าม = ${adj} × tan ${th}° = ${adj} × ${fmt(Math.tan(rad(th)), 4)}`)}`, `${ex(`opp = ${adj} × tan ${th}° = ${adj} × ${fmt(Math.tan(rad(th)), 4)}`)}`), L(`${ex(`≈ ${fmt(ans, 2)}`)}`)],
+    mistakes: [{ tag: 'trig-ratio', value: r2(adj * Math.sin(rad(th))), step: 0 }, { tag: 'trig-inverse', value: r2(adj / Math.tan(rad(th))), step: 1 }, { tag: 'trig-ratio', value: r2(adj / Math.cos(rad(th))), step: 0 }], hint: L('ด้านข้ามกับด้านชิด → ใช้ tan', 'Opposite & adjacent → use tan') };
+}});
+
+def({ id: 'seq', subject: 'math', grades: [5], name: L('ลำดับและอนุกรม', 'Sequences & series'), gen(lv) {
+  if (lv === 1) {
+    const a = ri(-10, 20), d = nz(-6, 9), n = ri(8, 30), ans = a + (n - 1) * d;
+    const terms = [0, 1, 2, 3].map(i => n2s(a + i * d)).join(', ');
+    return { text: L(`ลำดับเลขคณิต ${ex(`${terms}, …`)} พจน์ที่ ${ex(n)} คือเท่าไร`, `Arithmetic sequence ${ex(`${terms}, …`)}. Find term ${ex(n)}.`), answer: ans,
+      steps: [L(`${ex(`a₁ = ${n2s(a)}, d = ${n2s(d)}`)}`), L(`${ex(`aₙ = a₁ + (n − 1)d = ${n2s(a)} + (${n} − 1)(${n2s(d)})`)}`), L(`${ex(`= ${n2s(ans)}`)}`)],
+      mistakes: [{ tag: 'seq-index', value: a + n * d, step: 1 }], hint: L('aₙ = a₁ + (n − 1)d') };
+  }
+  if (lv === 2) {
+    const a = ri(-10, 20), d = nz(-5, 8), n = ri(10, 40), ans = n * (2 * a + (n - 1) * d) / 2;
+    return { text: L(`ผลบวก ${ex(n)} พจน์แรกของอนุกรมเลขคณิตที่มี ${ex(`a₁ = ${n2s(a)}`)} และ ${ex(`d = ${n2s(d)}`)} เท่ากับเท่าไร`, `Find the sum of the first ${ex(n)} terms of an arithmetic series with ${ex(`a₁ = ${n2s(a)}`)}, ${ex(`d = ${n2s(d)}`)}.`), answer: ans,
+      steps: [L(`${ex(`Sₙ = n/2 · [2a₁ + (n − 1)d]`)}`), L(`${ex(`= ${n}/2 · [2(${n2s(a)}) + ${n - 1}(${n2s(d)})] = ${n}/2 · ${n2s(2 * a + (n - 1) * d)}`)}`), L(`${ex(`= ${n2s(ans)}`)}`)],
+      mistakes: [{ tag: 'half-forgot', value: ans * 2, step: 0 }, { tag: 'seq-index', value: n * (2 * a + n * d) / 2, step: 1 }], hint: L('Sₙ = n/2 · [2a₁ + (n − 1)d]') };
+  }
+  const a = ri(1, 5), r = pick([2, 3, -2]), n = ri(4, 8), ans = a * r ** (n - 1);
+  const terms = [0, 1, 2].map(i => n2s(a * r ** i)).join(', ');
+  return { text: L(`ลำดับเรขาคณิต ${ex(`${terms}, …`)} พจน์ที่ ${ex(n)} คือเท่าไร`, `Geometric sequence ${ex(`${terms}, …`)}. Find term ${ex(n)}.`), answer: ans,
+    steps: [L(`${ex(`a₁ = ${a}, r = ${n2s(r)}`)}`), L(`${ex(`aₙ = a₁ · r${sup('n−1')} = ${a} · ${neg(r)}${sup(n - 1)}`)}`), L(`${ex(`= ${n2s(ans)}`)}`)],
+    mistakes: [{ tag: 'seq-index', value: a * r ** n, step: 1 }, { tag: 'exponent-order', value: (a * r) ** (n - 1), step: 1 }], hint: L('aₙ = a₁ · rⁿ⁻¹') };
+}});
+
+def({ id: 'prob', subject: 'math', grades: [5], name: L('ความน่าจะเป็น', 'Probability'), gen(lv) {
+  const note = L('ตอบเป็นเศษส่วน (เช่น 3/8) หรือทศนิยม 3 ตำแหน่ง', 'Answer as a fraction (e.g. 3/8) or 3 d.p.');
+  if (lv === 1) {
+    const r = ri(2, 9), b = ri(2, 9);
+    return { text: L(`ถุงใบหนึ่งมีลูกบอลสีแดง ${ex(r)} ลูก และสีน้ำเงิน ${ex(b)} ลูก สุ่มหยิบ 1 ลูก ความน่าจะเป็นที่ได้สีแดงเท่าไร`, `A bag has ${ex(r)} red and ${ex(b)} blue balls. One is drawn at random. P(red)?`), note, tol: 0.0006, answer: r / (r + b), answerText: fracStr(r, r + b),
+      steps: [L(`ผลลัพธ์ทั้งหมด = ${ex(`${r} + ${b} = ${r + b}`)}`, `All outcomes = ${ex(`${r} + ${b} = ${r + b}`)}`), L(`${ex(`P(แดง) = ${r}/${r + b} = ${fracStr(r, r + b)}`)}`, `${ex(`P(red) = ${r}/${r + b} = ${fracStr(r, r + b)}`)}`)],
+      mistakes: [{ tag: 'prob-total', value: r / b, step: 0 }], hint: L('ตัวส่วนคือจำนวนลูกบอลทั้งหมด', 'The denominator is the total number of balls') };
+  }
+  if (lv === 2) {
+    const s = nz(2, 12, [7]), cnt = 6 - Math.abs(s - 7);
+    return { text: L(`ทอยลูกเต๋า 2 ลูกพร้อมกัน ความน่าจะเป็นที่ผลรวมแต้มเท่ากับ ${ex(s)} เท่าไร`, `Two dice are rolled. What is P(sum = ${ex(s)})?`), note, tol: 0.0006, answer: cnt / 36, answerText: fracStr(cnt, 36),
+      steps: [L(`ผลลัพธ์ทั้งหมด ${ex('6 × 6 = 36')} แบบ (มีโอกาสเท่ากัน)`, `${ex('6 × 6 = 36')} equally likely outcomes`), L(`คู่ที่รวมได้ ${s}: มี ${cnt} แบบ`, `Pairs summing to ${s}: ${cnt}`), L(`${ex(`P = ${cnt}/36 = ${fracStr(cnt, 36)}`)}`)],
+      mistakes: [{ tag: 'sample-space', value: 1 / 11, step: 0 }, { tag: 'prob-total', value: cnt / 12, step: 0 }], hint: L('เขียนตาราง 6×6 แล้วนับ', 'Draw a 6×6 table and count') };
+  }
+  const r = ri(3, 8), b = ri(2, 8), n = r + b;
+  return { text: L(`ถุงมีลูกแก้วแดง ${ex(r)} ลูก เขียว ${ex(b)} ลูก หยิบ 2 ลูกทีละลูกโดย<b>ไม่ใส่คืน</b> ความน่าจะเป็นที่ได้แดงทั้งสองลูกเท่าไร`, `A bag has ${ex(r)} red and ${ex(b)} green marbles. Two are drawn <b>without replacement</b>. P(both red)?`), note, tol: 0.0006, answer: r * (r - 1) / (n * (n - 1)), answerText: fracStr(r * (r - 1), n * (n - 1)),
+    steps: [L(`ลูกแรกแดง: ${ex(`${r}/${n}`)}`, `First red: ${ex(`${r}/${n}`)}`), L(`ลูกที่สองแดง (เหลือแดง ${r - 1} จาก ${n - 1}): ${ex(`${r - 1}/${n - 1}`)}`, `Second red (${r - 1} of ${n - 1} left): ${ex(`${r - 1}/${n - 1}`)}`), L(`${ex(`P = ${r}/${n} × ${r - 1}/${n - 1} = ${fracStr(r * (r - 1), n * (n - 1))}`)}`)],
+    mistakes: [{ tag: 'replacement', value: (r / n) ** 2, step: 1 }], hint: L('หยิบลูกที่สอง จำนวนทั้งหมดลดลง 1', 'After the first draw, one fewer marble remains') };
+}});
+
+def({ id: 'deriv', subject: 'math', grades: [6], name: L('อนุพันธ์ของพหุนาม', 'Derivatives of polynomials'), gen(lv) {
+  const k = nz(-3, 3);
+  let cs; // [[coef, pow]]
+  if (lv === 1) cs = [[nz(-5, 5), 2], [nz(-9, 9), 1], [ri(-9, 9), 0]];
+  else if (lv === 2) cs = [[nz(-4, 4), 3], [nz(-6, 6), 2], [nz(-9, 9), 1], [ri(-9, 9), 0]];
+  else cs = [[nz(-3, 3), 4], [nz(-5, 5), 3], [nz(-9, 9), 1], [ri(-9, 9), 0]];
+  const d = cs.filter(([, p]) => p > 0).map(([c, p]) => [c * p, p - 1]);
+  const ev = arr => arr.reduce((s, [c, p]) => s + c * k ** p, 0);
+  const ans = ev(d);
+  return { text: L(`กำหนด ${ex(`f(x) = ${poly(cs)}`)} จงหา ${ex(`f′(${n2s(k)})`)}`, `Given ${ex(`f(x) = ${poly(cs)}`)}, find ${ex(`f′(${n2s(k)})`)}`), answer: ans,
+    steps: [L(`ใช้ ${ex(`d/dx(ax${sup('n')}) = n·a·x${sup('n−1')}`)} ทีละพจน์`, `Apply ${ex(`d/dx(ax${sup('n')}) = n·a·x${sup('n−1')}`)} term by term`), L(`${ex(`f′(x) = ${poly(d)}`)}`), L(`แทน x = ${n2s(k)}: ${ex(`f′(${n2s(k)}) = ${n2s(ans)}`)}`, `Substitute x = ${n2s(k)}: ${ex(`f′(${n2s(k)}) = ${n2s(ans)}`)}`)],
+    mistakes: [{ tag: 'derivative-eval', value: ev(cs), step: 2 }, { tag: 'derivative-power', value: ev(cs.filter(([, p]) => p > 0).map(([c, p]) => [c, p - 1])), step: 0 }, { tag: 'derivative-exponent', value: ev(cs.filter(([, p]) => p > 0).map(([c, p]) => [c * p, p])), step: 0 }],
+    hint: L('ดิฟก่อน แล้วค่อยแทนค่า', 'Differentiate first, then substitute') };
+}});
+
+/* ===== PHYSICS ===== */
+def({ id: 'kin', subject: 'physics', grades: [4], name: L('การเคลื่อนที่แนวตรง', 'Linear motion'), gen(lv) {
+  if (lv === 1) {
+    const u = ri(0, 10), a = ri(1, 5), t = ri(2, 10), s = u * t + 0.5 * a * t * t;
+    return { text: L(`รถเริ่มต้นด้วยความเร็ว ${ex(`${u} m/s`)} เร่งด้วยความเร่งคงที่ ${ex(`${a} m/s²`)} เป็นเวลา ${ex(`${t} s`)} รถเคลื่อนที่ได้ระยะทางเท่าไร`, `A car starts at ${ex(`${u} m/s`)} and accelerates at ${ex(`${a} m/s²`)} for ${ex(`${t} s`)}. How far does it travel?`), answer: s, unit: 'm', unitOpts: ['m', 'm/s', 'm/s²', 's'],
+      steps: [L(`${ex('s = ut + ½at²')}`), L(`${ex(`s = (${u})(${t}) + ½(${a})(${t})² = ${u * t} + ${fmt(0.5 * a * t * t)}`)}`), L(`${ex(`s = ${fmt(s)} m`)}`)],
+      mistakes: [{ tag: 'half-forgot', value: u * t + a * t * t, step: 0 }, { tag: 'formula', value: u * t, step: 0 }], hint: L('s = ut + ½at²') };
+  }
+  if (lv === 2) {
+    const uk = pick([36, 54, 72, 90, 108]), a = ri(1, 4), t = ri(2, 8), v = uk / 3.6 + a * t;
+    return { text: L(`รถวิ่งด้วยความเร็ว ${ex(`${uk} km/h`)} แล้วเร่งด้วย ${ex(`${a} m/s²`)} นาน ${ex(`${t} s`)} ความเร็วสุดท้ายเป็นเท่าไรในหน่วย m/s`, `A car at ${ex(`${uk} km/h`)} accelerates at ${ex(`${a} m/s²`)} for ${ex(`${t} s`)}. Final speed in m/s?`), answer: v, unit: 'm/s', unitOpts: ['m/s', 'km/h', 'm/s²', 'm'],
+      steps: [L(`แปลงหน่วย: ${ex(`${uk} km/h ÷ 3.6 = ${fmt(uk / 3.6)} m/s`)}`, `Convert: ${ex(`${uk} km/h ÷ 3.6 = ${fmt(uk / 3.6)} m/s`)}`), L(`${ex(`v = u + at = ${fmt(uk / 3.6)} + (${a})(${t})`)}`), L(`${ex(`v = ${fmt(v)} m/s`)}`)],
+      mistakes: [{ tag: 'unit-convert', value: uk + a * t, step: 0 }, { tag: 'formula', value: uk / 3.6 + a, step: 1 }], hint: L('แปลง km/h เป็น m/s ก่อน (÷ 3.6)', 'Convert km/h to m/s first (÷ 3.6)') };
+  }
+  const uk = pick([36, 54, 72, 90, 108]), a = ri(2, 8), u = uk / 3.6, s = r2(u * u / (2 * a));
+  return { text: L(`รถวิ่งด้วยความเร็ว ${ex(`${uk} km/h`)} เบรกด้วยความหน่วง ${ex(`${a} m/s²`)} จนหยุด ระยะเบรกเป็นเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A car at ${ex(`${uk} km/h`)} brakes at ${ex(`${a} m/s²`)} until it stops. Braking distance? (2 d.p.)`), answer: s, unit: 'm', unitOpts: ['m', 'm/s', 's', 'km'],
+    steps: [L(`${ex(`u = ${uk} ÷ 3.6 = ${fmt(u)} m/s`)}, ${ex('v = 0')}`), L(`${ex('v² = u² − 2as')} → ${ex('s = u² / 2a')}`), L(`${ex(`s = ${fmt(u)}² / (2 × ${a}) ≈ ${fmt(s, 2)} m`)}`)],
+    mistakes: [{ tag: 'unit-convert', value: r2(uk * uk / (2 * a)), step: 0 }, { tag: 'half-forgot', value: r2(u * u / a), step: 1 }, { tag: 'square-forgot', value: r2(u / (2 * a)), step: 1 }], hint: L('ใช้ v² = u² + 2as โดยความเร่งเป็นลบ', 'Use v² = u² + 2as with negative acceleration') };
+}});
+
+def({ id: 'newton', subject: 'physics', grades: [4], name: L('กฎการเคลื่อนที่ของนิวตัน', 'Newton’s laws'), gen(lv) {
+  if (lv === 1) {
+    const F = ri(10, 100), m = ri(2, 20), a = r2(F / m);
+    return { text: L(`ออกแรง ${ex(`${F} N`)} ดึงวัตถุมวล ${ex(`${m} kg`)} บนพื้นลื่น วัตถุมีความเร่งเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A ${ex(`${F} N`)} force pulls a ${ex(`${m} kg`)} mass on a frictionless floor. Acceleration? (2 d.p.)`), answer: a, unit: 'm/s²', unitOpts: ['m/s²', 'N', 'm/s', 'kg'],
+      steps: [L(`${ex('ΣF = ma')} → ${ex('a = F / m')}`), L(`${ex(`a = ${F} / ${m} ≈ ${fmt(a, 2)} m/s²`)}`)],
+      mistakes: [{ tag: 'formula-swap', value: F * m, step: 0 }, { tag: 'formula-swap', value: r2(m / F, 3), step: 0 }], hint: L('a = F / m') };
+  }
+  if (lv === 2) {
+    const m = ri(2, 15), F = ri(30, 120), f = ri(5, F - 10), a = r2((F - f) / m);
+    return { text: L(`ดึงกล่องมวล ${ex(`${m} kg`)} ด้วยแรง ${ex(`${F} N`)} มีแรงเสียดทาน ${ex(`${f} N`)} ต้านการเคลื่อนที่ กล่องมีความเร่งเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A ${ex(`${m} kg`)} box is pulled with ${ex(`${F} N`)} against ${ex(`${f} N`)} of friction. Acceleration? (2 d.p.)`), answer: a, unit: 'm/s²', unitOpts: ['m/s²', 'N', 'm/s', 'kg'],
+      steps: [L(`แรงลัพธ์ ${ex(`ΣF = ${F} − ${f} = ${F - f} N`)}`, `Net force ${ex(`ΣF = ${F} − ${f} = ${F - f} N`)}`), L(`${ex(`a = ΣF / m = ${F - f} / ${m} ≈ ${fmt(a, 2)} m/s²`)}`)],
+      mistakes: [{ tag: 'net-force', value: r2(F / m), step: 0 }, { tag: 'vector-direction', value: r2((F + f) / m), step: 0 }], hint: L('หาแรงลัพธ์ก่อน (แรงดึง − แรงเสียดทาน)', 'Find the net force first (pull − friction)') };
+  }
+  const m1 = ri(2, 10), m2 = ri(2, 10), F = ri(20, 100), a = F / (m1 + m2), T = r2(m2 * a);
+  return { text: L(`กล่อง A มวล ${ex(`${m1} kg`)} ผูกเชือกกับกล่อง B มวล ${ex(`${m2} kg`)} ที่อยู่ด้านหลัง ออกแรง ${ex(`${F} N`)} ดึงกล่อง A บนพื้นลื่น แรงตึงเชือกระหว่างกล่องเป็นเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `Box A (${ex(`${m1} kg`)}) is tied to box B (${ex(`${m2} kg`)}) behind it. A ${ex(`${F} N`)} force pulls A on a frictionless floor. Rope tension? (2 d.p.)`), answer: T, unit: 'N', unitOpts: ['N', 'm/s²', 'kg', 'J'],
+    steps: [L(`ทั้งระบบ: ${ex(`a = F / (m₁ + m₂) = ${F} / ${m1 + m2} ≈ ${fmt(a, 3)} m/s²`)}`, `Whole system: ${ex(`a = F / (m₁ + m₂) = ${F} / ${m1 + m2} ≈ ${fmt(a, 3)} m/s²`)}`), L(`พิจารณากล่อง B: แรงเดียวคือแรงตึง ${ex(`T = m₂a = ${m2} × ${fmt(a, 3)}`)}`, `Consider B alone: only tension acts, ${ex(`T = m₂a = ${m2} × ${fmt(a, 3)}`)}`), L(`${ex(`T ≈ ${fmt(T, 2)} N`)}`)],
+    mistakes: [{ tag: 'net-force', value: F, step: 1 }, { tag: 'tension-block', value: r2(m1 * a), step: 1 }], hint: L('หาความเร่งของทั้งระบบก่อน แล้วพิจารณากล่องหลังกล่องเดียว', 'Find the system acceleration, then isolate the rear box') };
+}});
+
+def({ id: 'proj', subject: 'physics', grades: [4], name: L('การเคลื่อนที่แบบโพรเจกไทล์', 'Projectile motion'), gen(lv) {
+  const gNote = L(`ใช้ g = ${G_} m/s² ไม่คิดแรงต้านอากาศ`, `Use g = ${G_} m/s², ignore air resistance`);
+  if (lv < 3) {
+    const t = ri(1, 6), h = 5 * t * t, u = ri(5, 25);
+    if (lv === 1) return { text: L(`ลูกบอลกลิ้งตกจากหน้าผาสูง ${ex(`${h} m`)} ในแนวราบ ใช้เวลาเท่าไรจึงถึงพื้น`, `A ball rolls horizontally off a ${ex(`${h} m`)} cliff. How long until it lands?`), note: gNote, answer: t, unit: 's', unitOpts: ['s', 'm', 'm/s', 'm/s²'],
+      diagram: svgCliff({ h: `${h} m` }),
+      steps: [L(`แนวดิ่งเริ่มจากความเร็ว 0: ${ex('h = ½gt²')}`, `Vertical motion starts from rest: ${ex('h = ½gt²')}`), L(`${ex(`t = √(2h/g) = √(2 × ${h} / ${G_})`)}`), L(`${ex(`t = ${t} s`)}`)],
+      mistakes: [{ tag: 'half-forgot', value: r2(Math.sqrt(h / G_)), step: 1 }, { tag: 'sqrt-forgot', value: 2 * h / G_, step: 2 }], hint: L('h = ½gt² (แนวดิ่งไม่ขึ้นกับความเร็วแนวราบ)', 'h = ½gt² — vertical motion is independent of horizontal speed') };
+    return { text: L(`ขว้างวัตถุในแนวราบด้วยความเร็ว ${ex(`${u} m/s`)} จากหน้าผาสูง ${ex(`${h} m`)} วัตถุตกห่างจากฐานหน้าผาเท่าไร`, `An object is thrown horizontally at ${ex(`${u} m/s`)} from a ${ex(`${h} m`)} cliff. How far from the base does it land?`), note: gNote, answer: u * t, unit: 'm', unitOpts: ['m', 's', 'm/s', 'm/s²'],
+      diagram: svgCliff({ h: `${h} m`, u: `${u} m/s`, R: '?' }),
+      steps: [L(`เวลาตก: ${ex(`t = √(2h/g) = √(2 × ${h} / ${G_}) = ${t} s`)}`, `Fall time: ${ex(`t = √(2h/g) = √(2 × ${h} / ${G_}) = ${t} s`)}`), L(`แนวราบความเร็วคงที่: ${ex(`R = u · t = ${u} × ${t}`)}`, `Horizontal speed is constant: ${ex(`R = u · t = ${u} × ${t}`)}`), L(`${ex(`R = ${u * t} m`)}`)],
+      mistakes: [{ tag: 'half-forgot', value: r2(u * Math.sqrt(h / G_)), step: 0 }, { tag: 'sqrt-forgot', value: u * 2 * h / G_, step: 0 }], hint: L('หาเวลาจากแนวดิ่งก่อน แล้วคูณความเร็วแนวราบ', 'Get time from the vertical motion, then multiply by horizontal speed') };
+  }
+  const th = pick([15, 30, 37, 45, 53, 60, 75]), u = ri(10, 40), rad = th * Math.PI / 180, R = r2(u * u * Math.sin(2 * rad) / G_);
+  return { text: L(`ยิงลูกบอลจากพื้นด้วยความเร็ว ${ex(`${u} m/s`)} ทำมุม ${ex(`${th}°`)} กับแนวราบ ลูกบอลตกห่างจากจุดยิงเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A ball is launched at ${ex(`${u} m/s`)}, ${ex(`${th}°`)} above horizontal. Horizontal range? (2 d.p.)`), note: gNote, answer: R, unit: 'm', unitOpts: ['m', 's', 'm/s', 'J'],
+    diagram: svgAngleShot({ u: `${u} m/s`, angle: `${th}°`, R: 'R = ?' }),
+    steps: [L(`${ex('R = u² sin 2θ / g')}`), L(`${ex(`R = ${u}² × sin ${2 * th}° / ${G_} = ${u * u} × ${fmt(Math.sin(2 * rad), 4)} / ${G_}`)}`), L(`${ex(`R ≈ ${fmt(R, 2)} m`)}`)],
+    mistakes: [{ tag: 'double-angle', value: r2(u * u * Math.sin(rad) / G_), step: 0 }, { tag: 'square-forgot', value: r2(u * Math.sin(2 * rad) / G_), step: 0 }], hint: L('R = u² sin 2θ / g') };
+}});
+
+def({ id: 'energy', subject: 'physics', grades: [4], name: L('งานและพลังงาน', 'Work & energy'), gen(lv) {
+  const gNote = L(`ใช้ g = ${G_} m/s²`, `Use g = ${G_} m/s²`);
+  if (lv === 1) {
+    const m = ri(1, 20), h = ri(2, 30), E = m * G_ * h;
+    return { text: L(`วัตถุมวล ${ex(`${m} kg`)} อยู่สูงจากพื้น ${ex(`${h} m`)} มีพลังงานศักย์โน้มถ่วงเท่าไร`, `A ${ex(`${m} kg`)} object is ${ex(`${h} m`)} above the ground. Gravitational potential energy?`), note: gNote, answer: E, unit: 'J', unitOpts: ['J', 'N', 'W', 'kg'],
+      steps: [L(`${ex('Eₚ = mgh')}`), L(`${ex(`Eₚ = ${m} × ${G_} × ${h} = ${E} J`)}`)],
+      mistakes: [{ tag: 'gravity-forgot', value: m * h, step: 0 }, { tag: 'half-forgot', value: E / 2, step: 0 }], hint: L('Eₚ = mgh') };
+  }
+  if (lv === 2) {
+    const m = ri(1, 12), v = ri(2, 20), E = 0.5 * m * v * v;
+    return { text: L(`วัตถุมวล ${ex(`${m} kg`)} เคลื่อนที่ด้วยความเร็ว ${ex(`${v} m/s`)} มีพลังงานจลน์เท่าไร`, `A ${ex(`${m} kg`)} object moves at ${ex(`${v} m/s`)}. Kinetic energy?`), answer: E, unit: 'J', unitOpts: ['J', 'N', 'W', 'kg·m/s'],
+      steps: [L(`${ex('Eₖ = ½mv²')}`), L(`${ex(`Eₖ = ½ × ${m} × ${v}² = ½ × ${m} × ${v * v}`)}`), L(`${ex(`Eₖ = ${fmt(E)} J`)}`)],
+      mistakes: [{ tag: 'half-forgot', value: m * v * v, step: 0 }, { tag: 'square-forgot', value: 0.5 * m * v, step: 0 }], hint: L('Eₖ = ½mv²') };
+  }
+  const h = ri(2, 45), v = r2(Math.sqrt(2 * G_ * h));
+  return { text: L(`ปล่อยวัตถุจากความสูง ${ex(`${h} m`)} ขณะกระทบพื้นมีอัตราเร็วเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `An object is dropped from ${ex(`${h} m`)}. Speed on impact? (2 d.p.)`), note: gNote, answer: v, unit: 'm/s', unitOpts: ['m/s', 'J', 'm/s²', 'm'],
+    steps: [L(`กฎอนุรักษ์พลังงาน: ${ex('mgh = ½mv²')}`, `Energy conservation: ${ex('mgh = ½mv²')}`), L(`${ex(`v = √(2gh) = √(2 × ${G_} × ${h}) = √${2 * G_ * h}`)}`), L(`${ex(`v ≈ ${fmt(v, 2)} m/s`)}`)],
+    mistakes: [{ tag: 'sqrt-forgot', value: 2 * G_ * h, step: 1 }, { tag: 'half-forgot', value: r2(Math.sqrt(G_ * h)), step: 1 }], hint: L('Eₚ ที่จุดสูงสุด = Eₖ ที่พื้น', 'Eₚ at the top = Eₖ at the bottom') };
+}});
+
+def({ id: 'momentum', subject: 'physics', grades: [4], name: L('โมเมนตัมและการชน', 'Momentum & collisions'), gen(lv) {
+  if (lv === 1) {
+    const m1 = ri(1, 10), m2 = ri(1, 10), u1 = ri(2, 12), v = r2(m1 * u1 / (m1 + m2));
+    return { text: L(`รถทดลองมวล ${ex(`${m1} kg`)} วิ่งด้วยความเร็ว ${ex(`${u1} m/s`)} ชนรถมวล ${ex(`${m2} kg`)} ที่จอดนิ่งแล้วติดไปด้วยกัน ความเร็วหลังชนเป็นเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A ${ex(`${m1} kg`)} cart at ${ex(`${u1} m/s`)} hits a stationary ${ex(`${m2} kg`)} cart and they stick. Speed after? (2 d.p.)`), answer: v, unit: 'm/s', unitOpts: ['m/s', 'kg·m/s', 'm/s²', 'N'],
+      steps: [L(`อนุรักษ์โมเมนตัม: ${ex('m₁u₁ + m₂(0) = (m₁ + m₂)v')}`, `Conserve momentum: ${ex('m₁u₁ + m₂(0) = (m₁ + m₂)v')}`), L(`${ex(`v = ${m1} × ${u1} / (${m1} + ${m2}) = ${m1 * u1} / ${m1 + m2}`)}`), L(`${ex(`v ≈ ${fmt(v, 2)} m/s`)}`)],
+      mistakes: [{ tag: 'mass-total', value: u1, step: 1 }, { tag: 'mass-total', value: r2(m1 * u1 / m2), step: 1 }], hint: L('ชนแล้วติดกัน ใช้มวลรวม', 'Stuck together → use the combined mass') };
+  }
+  if (lv === 2) {
+    const m1 = ri(2, 10), m2 = ri(2, 10), u1 = ri(3, 12), u2 = ri(2, 10), v = r2((m1 * u1 - m2 * u2) / (m1 + m2));
+    return { text: L(`รถ A มวล ${ex(`${m1} kg`)} วิ่งไปทางขวา ${ex(`${u1} m/s`)} ชนประสานงากับรถ B มวล ${ex(`${m2} kg`)} ที่วิ่งไปทางซ้าย ${ex(`${u2} m/s`)} แล้วติดกัน หาความเร็วหลังชน (ทางขวาเป็นบวก, ทศนิยม 2 ตำแหน่ง)`, `Cart A (${ex(`${m1} kg`)}) moves right at ${ex(`${u1} m/s`)} and hits cart B (${ex(`${m2} kg`)}) moving left at ${ex(`${u2} m/s`)}; they stick. Final velocity? (right = +, 2 d.p.)`), answer: v, unit: 'm/s', unitOpts: ['m/s', 'kg·m/s', 'm/s²', 'N'],
+      steps: [L(`กำหนดขวาเป็นบวก: ${ex(`u_B = −${u2} m/s`)}`, `Right is positive: ${ex(`u_B = −${u2} m/s`)}`), L(`${ex(`(${m1})(${u1}) + (${m2})(−${u2}) = (${m1 + m2})v`)}`), L(`${ex(`v = ${n2s(m1 * u1 - m2 * u2)} / ${m1 + m2} ≈ ${fmt(v, 2)} m/s`)} ${v < 0 ? '(ไปทางซ้าย)' : ''}`, `${ex(`v = ${n2s(m1 * u1 - m2 * u2)} / ${m1 + m2} ≈ ${fmt(v, 2)} m/s`)} ${v < 0 ? '(to the left)' : ''}`)],
+      mistakes: [{ tag: 'vector-direction', value: r2((m1 * u1 + m2 * u2) / (m1 + m2)), step: 0 }, { tag: 'sign', value: -v, step: 2 }], hint: L('ความเร็วที่สวนทางต้องติดลบ', 'The opposite velocity is negative') };
+  }
+  const m = pick([0.1, 0.2, 0.3, 0.4, 0.5]), u = ri(5, 20), v = ri(3, u), t = pick([0.01, 0.02, 0.05, 0.1]), F = r2(m * (u + v) / t);
+  return { text: L(`ลูกบอลมวล ${ex(`${m} kg`)} กระทบผนังด้วยความเร็ว ${ex(`${u} m/s`)} สะท้อนกลับด้วยความเร็ว ${ex(`${v} m/s`)} ใช้เวลากระทบ ${ex(`${t} s`)} แรงเฉลี่ยที่ผนังกระทำต่อลูกบอลมีขนาดเท่าไร`, `A ${ex(`${m} kg`)} ball hits a wall at ${ex(`${u} m/s`)} and rebounds at ${ex(`${v} m/s`)}. Contact time ${ex(`${t} s`)}. Average force magnitude?`), answer: F, unit: 'N', unitOpts: ['N', 'N·s', 'kg·m/s', 'J'],
+    steps: [L(`ทิศสะท้อนเป็นบวก: ${ex(`Δp = m(v − (−u)) = ${m}(${v} + ${u}) = ${fmt(m * (u + v))} kg·m/s`)}`, `Rebound direction +: ${ex(`Δp = m(v − (−u)) = ${m}(${v} + ${u}) = ${fmt(m * (u + v))} kg·m/s`)}`), L(`${ex(`F = Δp / Δt = ${fmt(m * (u + v))} / ${t}`)}`), L(`${ex(`F = ${fmt(F, 2)} N`)}`)],
+    mistakes: [{ tag: 'vector-direction', value: r2(m * (u - v) / t), step: 0 }, { tag: 'formula', value: r2(m * (u + v)), step: 1 }], hint: L('ความเร็วก่อนและหลังมีทิศตรงข้าม Δv = v + u', 'Velocities are opposite, so Δv = v + u') };
+}});
+
+def({ id: 'circuit', subject: 'physics', grades: [3, 6], name: L('ไฟฟ้ากระแสและวงจร', 'Electric circuits'), gen(lv) {
+  if (lv === 1) {
+    const R = pick([2, 4, 5, 6, 8, 10, 12, 20]), V = ri(3, 24), I = r2(V / R);
+    return { text: L(`ต่อตัวต้านทาน ${ex(`${R} Ω`)} เข้ากับแบตเตอรี่ ${ex(`${V} V`)} กระแสไฟฟ้าในวงจรเป็นเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `A ${ex(`${R} Ω`)} resistor is connected to a ${ex(`${V} V`)} battery. Current? (2 d.p.)`), answer: I, unit: 'A', unitOpts: ['A', 'V', 'Ω', 'W'],
+      diagram: svgCircuit({ kind: 'single', V: `${V} V`, R: [`${R} Ω`] }),
+      steps: [L(`กฎของโอห์ม ${ex('V = IR')} → ${ex('I = V / R')}`, `Ohm’s law ${ex('V = IR')} → ${ex('I = V / R')}`), L(`${ex(`I = ${V} / ${R} ≈ ${fmt(I, 2)} A`)}`)],
+      mistakes: [{ tag: 'formula-swap', value: V * R, step: 0 }, { tag: 'formula-swap', value: r2(R / V, 3), step: 0 }], hint: L('I = V / R') };
+  }
+  if (lv === 2) {
+    const R = [ri(2, 20), ri(2, 20), ri(2, 20)], V = ri(6, 48), Rt = R[0] + R[1] + R[2], I = r2(V / Rt), Rp = 1 / (1 / R[0] + 1 / R[1] + 1 / R[2]);
+    return { text: L(`ตัวต้านทาน ${ex(`${R[0]} Ω`)}, ${ex(`${R[1]} Ω`)} และ ${ex(`${R[2]} Ω`)} ต่อแบบ<b>อนุกรม</b>กับแบตเตอรี่ ${ex(`${V} V`)} กระแสในวงจรเป็นเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `Resistors ${ex(`${R[0]} Ω`)}, ${ex(`${R[1]} Ω`)}, ${ex(`${R[2]} Ω`)} are in <b>series</b> with a ${ex(`${V} V`)} battery. Current? (2 d.p.)`), answer: I, unit: 'A', unitOpts: ['A', 'V', 'Ω', 'W'],
+      diagram: svgCircuit({ kind: 'series', V: `${V} V`, R: R.map(r => `${r} Ω`) }),
+      steps: [L(`อนุกรม: ${ex(`R = ${R.join(' + ')} = ${Rt} Ω`)}`, `Series: ${ex(`R = ${R.join(' + ')} = ${Rt} Ω`)}`), L(`${ex(`I = V / R = ${V} / ${Rt} ≈ ${fmt(I, 2)} A`)}`)],
+      mistakes: [{ tag: 'series-parallel', value: r2(V / Rp), step: 0 }, { tag: 'formula', value: r2(V / R[0]), step: 0 }], hint: L('อนุกรม: ความต้านทานรวม = ผลบวก', 'Series: total resistance = sum') };
+  }
+  const R1 = pick([2, 3, 4, 6, 8, 10, 12, 15, 20]), R2 = pick([3, 4, 5, 6, 12, 24, 30]), Rt = r2(R1 * R2 / (R1 + R2));
+  return { text: L(`ตัวต้านทาน ${ex(`${R1} Ω`)} และ ${ex(`${R2} Ω`)} ต่อแบบ<b>ขนาน</b> ความต้านทานรวมเป็นเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `${ex(`${R1} Ω`)} and ${ex(`${R2} Ω`)} are connected in <b>parallel</b>. Equivalent resistance? (2 d.p.)`), answer: Rt, unit: 'Ω', unitOpts: ['Ω', 'A', 'V', 'W'],
+    diagram: svgCircuit({ kind: 'parallel', V: '', R: [`${R1} Ω`, `${R2} Ω`] }),
+    steps: [L(`ขนาน: ${ex(`1/R = 1/${R1} + 1/${R2} = ${fmt(1 / R1 + 1 / R2, 4)}`)}`, `Parallel: ${ex(`1/R = 1/${R1} + 1/${R2} = ${fmt(1 / R1 + 1 / R2, 4)}`)}`), L(`กลับเศษส่วน: ${ex(`R = R₁R₂ / (R₁ + R₂) = ${R1 * R2} / ${R1 + R2}`)}`, `Flip it: ${ex(`R = R₁R₂ / (R₁ + R₂) = ${R1 * R2} / ${R1 + R2}`)}`), L(`${ex(`R ≈ ${fmt(Rt, 2)} Ω`)}`)],
+    mistakes: [{ tag: 'series-parallel', value: R1 + R2, step: 0 }, { tag: 'reciprocal-forgot', value: r2(1 / R1 + 1 / R2, 3), step: 1 }], hint: L('ขนาน: 1/R = 1/R₁ + 1/R₂ (ค่ารวมน้อยกว่าตัวที่น้อยที่สุด)', 'Parallel: 1/R = 1/R₁ + 1/R₂ (result is below the smallest)') };
+}});
+
+def({ id: 'wave', subject: 'physics', grades: [5], name: L('คลื่น', 'Waves'), gen(lv) {
+  if (lv === 1) {
+    const f = ri(2, 50), lam = ri(1, 12) * 0.5, v = f * lam;
+    return { text: L(`คลื่นมีความถี่ ${ex(`${f} Hz`)} และความยาวคลื่น ${ex(`${lam} m`)} คลื่นนี้มีอัตราเร็วเท่าไร`, `A wave has frequency ${ex(`${f} Hz`)} and wavelength ${ex(`${lam} m`)}. Wave speed?`), answer: v, unit: 'm/s', unitOpts: ['m/s', 'Hz', 'm', 's'],
+      steps: [L(`${ex('v = fλ')}`), L(`${ex(`v = ${f} × ${lam} = ${fmt(v)} m/s`)}`)],
+      mistakes: [{ tag: 'formula-swap', value: r2(f / lam), step: 0 }, { tag: 'formula-swap', value: r2(lam / f, 3), step: 0 }], hint: L('v = fλ') };
+  }
+  if (lv === 2) {
+    const fk = pick([0.5, 0.85, 1, 1.7, 2, 3.4]), lam = r2(340 / (fk * 1000), 3);
+    return { text: L(`เสียงในอากาศมีอัตราเร็ว ${ex('340 m/s')} ถ้าเสียงมีความถี่ ${ex(`${fk} kHz`)} ความยาวคลื่นเป็นเท่าไร (ทศนิยม 3 ตำแหน่ง)`, `Sound travels at ${ex('340 m/s')}. For a ${ex(`${fk} kHz`)} tone, what is the wavelength? (3 d.p.)`), answer: lam, unit: 'm', unitOpts: ['m', 'Hz', 'm/s', 's'],
+      steps: [L(`แปลงหน่วย: ${ex(`${fk} kHz = ${fk * 1000} Hz`)}`, `Convert: ${ex(`${fk} kHz = ${fk * 1000} Hz`)}`), L(`${ex(`λ = v / f = 340 / ${fk * 1000}`)}`), L(`${ex(`λ = ${fmt(lam, 3)} m`)}`)],
+      mistakes: [{ tag: 'unit-convert', value: r2(340 / fk), step: 0 }, { tag: 'formula-swap', value: 340 * fk * 1000, step: 1 }], hint: L('kHz × 1000 = Hz แล้วใช้ λ = v / f', 'kHz × 1000 = Hz, then λ = v / f') };
+  }
+  const Ls = pick([0.5, 0.6, 0.8, 1, 1.2, 1.5]), v = ri(10, 40) * 10, n = ri(2, 4), f = r2(n * v / (2 * Ls));
+  return { text: L(`เชือกยาว ${ex(`${Ls} m`)} ตรึงปลายทั้งสองข้าง คลื่นในเชือกมีอัตราเร็ว ${ex(`${v} m/s`)} ความถี่ของฮาร์มอนิกที่ ${ex(n)} เป็นเท่าไร`, `A ${ex(`${Ls} m`)} string is fixed at both ends; wave speed ${ex(`${v} m/s`)}. Frequency of harmonic ${ex(n)}?`), answer: f, unit: 'Hz', unitOpts: ['Hz', 'm/s', 'm', 's'],
+    steps: [L(`ฮาร์มอนิกที่ n: ${ex('λ = 2L / n')}`, `nth harmonic: ${ex('λ = 2L / n')}`), L(`${ex(`f = nv / 2L = ${n} × ${v} / (2 × ${Ls})`)}`), L(`${ex(`f = ${fmt(f, 2)} Hz`)}`)],
+    mistakes: [{ tag: 'half-forgot', value: r2(n * v / Ls), step: 0 }, { tag: 'harmonic', value: r2(v / (2 * Ls)), step: 1 }], hint: L('เชือกตรึงสองปลาย: f = nv / 2L', 'Fixed both ends: f = nv / 2L') };
+}});
+
+/* ===== MATH — multi-step & applied ===== */
+const fact = n => (n <= 1 ? 1 : n * fact(n - 1));
+const nCr = (n, r) => fact(n) / (fact(r) * fact(n - r));
+const nPr = (n, r) => fact(n) / fact(n - r);
+const sub = s => `<sub>${s}</sub>`;
+const PI_ = 3.14;
+const NOTE_FRAC = L('ตอบเป็นเศษส่วนอย่างต่ำ (เช่น 5/6) หรือทศนิยม', 'Answer as a fraction in lowest terms (e.g. 5/6) or a decimal');
+const NOTE_2DP = L('ตอบเป็นทศนิยม 2 ตำแหน่ง', 'Answer to 2 decimal places');
+
+def({ id: 'workrate', subject: 'math', grades: [2, 3], name: L('งานและอัตราการทำงาน', 'Work-rate problems'), gen(lv) {
+  if (lv === 1) {
+    const a = pick([4, 6, 8, 10, 12, 15, 20]), b = nz(3, 20, [a]), t = a * b / (a + b);
+    return { text: L(`ช่าง A ทำงานชิ้นหนึ่งคนเดียวเสร็จใน ${ex(a)} วัน ช่าง B ทำงานเดียวกันคนเดียวเสร็จใน ${ex(b)} วัน ถ้าช่วยกันทำจะเสร็จในกี่วัน`, `Worker A alone finishes a job in ${ex(a)} days; worker B alone in ${ex(b)} days. Working together, how many days?`), note: NOTE_FRAC, answer: t, answerText: fracStr(a * b, a + b),
+      steps: [L(`อัตราต่อวัน: ${ex(`A = 1/${a}`)}, ${ex(`B = 1/${b}`)}`, `Rate per day: ${ex(`A = 1/${a}`)}, ${ex(`B = 1/${b}`)}`),
+        L(`รวมกัน: ${ex(`1/${a} + 1/${b} = ${a + b}/${a * b}`)} งานต่อวัน`, `Combined: ${ex(`1/${a} + 1/${b} = ${a + b}/${a * b}`)} of the job per day`),
+        L(`เวลา = 1 ÷ อัตรา: ${ex(`t = ${a * b}/${a + b} = ${fracStr(a * b, a + b)}`)} วัน`, `Time = 1 ÷ rate: ${ex(`t = ${a * b}/${a + b} = ${fracStr(a * b, a + b)}`)} days`)],
+      mistakes: [{ tag: 'rate-avg', value: (a + b) / 2, step: 1 }, { tag: 'reciprocal-forgot', value: (a + b) / (a * b), step: 2 }], hint: L('บวกอัตราการทำงานต่อวัน แล้วกลับเศษส่วน', 'Add the daily rates, then flip') };
+  }
+  if (lv === 2) {
+    const a = ri(3, 24), b = nz(3, 24, [a]), c = nz(3, 24, [a, b]), den = b * c + a * c + a * b, t = a * b * c / den;
+    return { text: L(`ท่อ 3 ท่อเติมน้ำเต็มสระได้ใน ${ex(a)}, ${ex(b)} และ ${ex(c)} ชั่วโมง ตามลำดับ ถ้าเปิดทั้งสามท่อพร้อมกันจะเต็มสระในกี่ชั่วโมง`, `Three pipes fill a tank alone in ${ex(a)}, ${ex(b)} and ${ex(c)} hours. All three open together — how many hours to fill it?`), note: NOTE_FRAC, answer: t, answerText: fracStr(a * b * c, den),
+      steps: [L(`อัตราต่อชั่วโมง: ${ex(`1/${a}, 1/${b}, 1/${c}`)}`, `Rate per hour: ${ex(`1/${a}, 1/${b}, 1/${c}`)}`),
+        L(`รวมอัตรา: ${ex(`1/${a} + 1/${b} + 1/${c} = ${den}/${a * b * c}`)}`, `Combined rate: ${ex(`1/${a} + 1/${b} + 1/${c} = ${den}/${a * b * c}`)}`),
+        L(`กลับเศษส่วน: ${ex(`t = ${a * b * c}/${den} = ${fracStr(a * b * c, den)}`)} ชั่วโมง`, `Flip: ${ex(`t = ${a * b * c}/${den} = ${fracStr(a * b * c, den)}`)} hours`)],
+      mistakes: [{ tag: 'rate-avg', value: (a + b + c) / 3, step: 1 }, { tag: 'reciprocal-forgot', value: den / (a * b * c), step: 2 }], hint: L('1/t = 1/a + 1/b + 1/c', '1/t = 1/a + 1/b + 1/c') };
+  }
+  const a = pick([12, 15, 20, 24, 30]), b = nz(8, 30, [a]), d = ri(2, Math.floor(a / 3)), num = d * (a + b) + (a - d) * b, den = a + b, t = num / den;
+  return { text: L(`ช่าง A ทำงานชิ้นหนึ่งคนเดียวเสร็จใน ${ex(a)} วัน ช่าง B คนเดียวเสร็จใน ${ex(b)} วัน A เริ่มทำคนเดียวก่อน ${ex(d)} วัน แล้ว B จึงมาช่วย จนงานเสร็จ รวมใช้เวลากี่วันนับจากเริ่มงาน`, `Worker A alone finishes a job in ${ex(a)} days, B alone in ${ex(b)} days. A works alone for ${ex(d)} days, then B joins until it is done. Total days from the start?`), note: NOTE_FRAC, answer: t, answerText: fracStr(num, den),
+    steps: [L(`A ทำคนเดียว ${d} วัน ได้ ${ex(`${d}/${a}`)} ของงาน เหลือ ${ex(`${a - d}/${a}`)}`, `A alone for ${d} days does ${ex(`${d}/${a}`)} of the job, leaving ${ex(`${a - d}/${a}`)}`),
+      L(`ช่วยกัน: อัตรา ${ex(`1/${a} + 1/${b} = ${a + b}/${a * b}`)} → เวลา ${ex(`(${a - d}/${a}) ÷ (${a + b}/${a * b}) = ${fracStr((a - d) * b, a + b)}`)} วัน`, `Together: rate ${ex(`1/${a} + 1/${b} = ${a + b}/${a * b}`)} → time ${ex(`(${a - d}/${a}) ÷ (${a + b}/${a * b}) = ${fracStr((a - d) * b, a + b)}`)} days`),
+      L(`รวม: ${ex(`${d} + ${fracStr((a - d) * b, a + b)} = ${fracStr(num, den)}`)} วัน`, `Total: ${ex(`${d} + ${fracStr((a - d) * b, a + b)} = ${fracStr(num, den)}`)} days`)],
+    mistakes: [{ tag: 'work-remaining', value: d + a * b / (a + b), step: 0 }, { tag: 'formula', value: (a - d) * b / (a + b), step: 2 }], hint: L('หางานที่เหลือก่อน แล้วค่อยคิดเวลาที่ทำร่วมกัน อย่าลืมบวกวันที่ A ทำคนเดียว', 'Find the remaining work, time it at the combined rate, and add A’s solo days') };
+}});
+
+def({ id: 'mixture', subject: 'math', grades: [3], name: L('สารละลายและการผสม', 'Mixtures & concentration'), gen(lv) {
+  if (lv === 1) {
+    const x = ri(2, 9), y = ri(2, 9), p = pick([10, 20, 30, 40, 60]), q = nz(5, 80, [p, 0]), c = r2((x * p + y * q) / (x + y));
+    return { text: L(`ผสมสารละลายเข้มข้น ${ex(`${p}%`)} ปริมาตร ${ex(`${x} L`)} กับสารละลายเข้มข้น ${ex(`${q}%`)} ปริมาตร ${ex(`${y} L`)} สารละลายที่ได้เข้มข้นกี่เปอร์เซ็นต์`, `${ex(`${x} L`)} of ${ex(`${p}%`)} solution is mixed with ${ex(`${y} L`)} of ${ex(`${q}%`)} solution. What percent is the mixture?`), note: NOTE_2DP, answer: c,
+      steps: [L(`เนื้อสาร: ${ex(`${x} × ${p}% + ${y} × ${q}% = ${fmt((x * p + y * q) / 100, 3)} L`)}`, `Solute: ${ex(`${x} × ${p}% + ${y} × ${q}% = ${fmt((x * p + y * q) / 100, 3)} L`)}`),
+        L(`ปริมาตรรวม ${ex(`${x} + ${y} = ${x + y} L`)}`, `Total volume ${ex(`${x} + ${y} = ${x + y} L`)}`),
+        L(`${ex(`(${x * p + y * q}/100) ÷ ${x + y} × 100 ≈ ${fmt(c, 2)}%`)}`)],
+      mistakes: [{ tag: 'avg-conc', value: (p + q) / 2, step: 0 }, { tag: 'var-swap', value: r2((x * q + y * p) / (x + y)), step: 0 }], hint: L('ถ่วงน้ำหนักความเข้มข้นด้วยปริมาตร', 'Weight each concentration by its volume') };
+  }
+  if (lv === 2) {
+    const x = ri(2, 10) * 5, p = pick([20, 30, 40, 50, 60]), r = pick([5, 8, 10, 12, 15, 16]), w = r2(x * (p - r) / r);
+    return { text: L(`มีสารละลายเข้มข้น ${ex(`${p}%`)} ปริมาตร ${ex(`${x} L`)} ต้องเติมน้ำบริสุทธิ์กี่ลิตรจึงจะเจือจางเหลือ ${ex(`${r}%`)}`, `You have ${ex(`${x} L`)} of ${ex(`${p}%`)} solution. How many litres of pure water must be added to dilute it to ${ex(`${r}%`)}?`), note: NOTE_2DP, answer: w, unit: 'L', unitOpts: ['L', '%', 'kg', 'mL'],
+      steps: [L(`เนื้อสารเดิม ${ex(`${x} × ${p}% = ${fmt(x * p / 100, 3)} L`)} (คงที่หลังเติมน้ำ)`, `Solute ${ex(`${x} × ${p}% = ${fmt(x * p / 100, 3)} L`)} stays constant`),
+        L(`ให้เติมน้ำ w ลิตร: ${ex(`${fmt(x * p / 100, 3)} = ${r}% × (${x} + w)`)}`, `Add w litres: ${ex(`${fmt(x * p / 100, 3)} = ${r}% × (${x} + w)`)}`),
+        L(`${ex(`w = ${x * p}/${r} − ${x} ≈ ${fmt(w, 2)} L`)}`)],
+      mistakes: [{ tag: 'mixture-total', value: r2(x * p / r), step: 2 }, { tag: 'mixture-setup', value: r2(x * (p - r) / p), step: 1 }], hint: L('เนื้อสารคงที่ แต่ปริมาตรรวมเพิ่มขึ้น', 'Solute stays the same; the total volume grows') };
+  }
+  const p = pick([5, 10, 15, 20]), q = pick([50, 60, 70, 80]), r = pick([25, 30, 35, 40]), T = pick([20, 30, 40, 50, 60]), y = r2(T * (r - p) / (q - p));
+  return { text: L(`ต้องการสารละลาย ${ex(`${r}%`)} ปริมาตรรวม ${ex(`${T} L`)} โดยผสมสารละลาย ${ex(`${p}%`)} กับ ${ex(`${q}%`)} ต้องใช้สารละลาย ${ex(`${q}%`)} กี่ลิตร`, `To make ${ex(`${T} L`)} of ${ex(`${r}%`)} solution you mix ${ex(`${p}%`)} and ${ex(`${q}%`)} solutions. How many litres of the ${ex(`${q}%`)} solution?`), note: NOTE_2DP, answer: y, unit: 'L', unitOpts: ['L', '%', 'kg', 'mL'],
+    steps: [L(`ให้ใช้ ${q}% จำนวน y ลิตร จึงใช้ ${p}% จำนวน ${ex(`${T} − y`)} ลิตร`, `Let y litres be the ${q}%; then ${ex(`${T} − y`)} litres are the ${p}%`),
+      L(`เนื้อสาร: ${ex(`${p}%(${T} − y) + ${q}%·y = ${r}% × ${T}`)}`, `Solute: ${ex(`${p}%(${T} − y) + ${q}%·y = ${r}% × ${T}`)}`),
+      L(`${ex(`y(${q} − ${p}) = ${T}(${r} − ${p})`)} → ${ex(`y ≈ ${fmt(y, 2)} L`)}`)],
+    mistakes: [{ tag: 'var-swap', value: r2(T * (q - r) / (q - p)), step: 1 }, { tag: 'mixture-setup', value: T / 2, step: 1 }], hint: L('ตั้งสมการเนื้อสารรวมแล้วแก้หา y', 'Write one solute equation and solve for y') };
+}});
+
+def({ id: 'interest', subject: 'math', grades: [3], name: L('ดอกเบี้ยเชิงเดียวและทบต้น', 'Simple & compound interest'), gen(lv) {
+  const P = ri(2, 50) * 1000, r = pick([2, 3, 4, 5, 6, 8, 10]), note = L('ตอบเป็นบาท ทศนิยม 2 ตำแหน่ง', 'Answer in baht, 2 decimal places'), baht = L('บาท', 'baht');
+  if (lv === 1) {
+    const n = ri(2, 6), I = P * r * n / 100;
+    return { text: L(`ฝากเงิน ${ex(P)} บาท ดอกเบี้ยเชิงเดียวร้อยละ ${ex(r)} ต่อปี เมื่อครบ ${ex(n)} ปี จะมีเงินรวมเท่าไร`, `A deposit of ${ex(P)} baht earns ${ex(`${r}%`)} simple interest per year. Total amount after ${ex(n)} years?`), note, tol: 0.5, answer: P + I,
+      steps: [L(`${ex(`I = Prn/100 = ${P} × ${r} × ${n} / 100 = ${I}`)} บาท`, `${ex(`I = Prn/100 = ${P} × ${r} × ${n} / 100 = ${I}`)} baht`), L(`${ex(`A = P + I = ${P} + ${I} = ${P + I}`)} บาท`, `${ex(`A = P + I = ${P} + ${I} = ${P + I}`)} baht`)],
+      mistakes: [{ tag: 'interest-only', value: I, step: 1 }], hint: L('เงินรวม = เงินต้น + ดอกเบี้ย', 'Amount = principal + interest') };
+  }
+  if (lv === 2) {
+    const n = ri(2, 4), A = r2(P * (1 + r / 100) ** n);
+    return { text: L(`ฝากเงิน ${ex(P)} บาท ดอกเบี้ยทบต้นปีละ ${ex(`${r}%`)} เมื่อครบ ${ex(n)} ปี จะมีเงินรวมเท่าไร`, `A deposit of ${ex(P)} baht earns ${ex(`${r}%`)} interest compounded yearly. Total after ${ex(n)} years?`), note, tol: 0.5, answer: A,
+      steps: [L(`ตัวคูณต่อปี ${ex(`1 + ${r}/100 = ${fmt(1 + r / 100, 4)}`)}`, `Yearly factor ${ex(`1 + ${r}/100 = ${fmt(1 + r / 100, 4)}`)}`), L(`${ex(`A = ${P} × ${fmt(1 + r / 100, 4)}${sup(n)}`)}`), L(`${ex(`A ≈ ${fmt(A, 2)}`)} ${baht.th}`, `${ex(`A ≈ ${fmt(A, 2)}`)} baht`)],
+      mistakes: [{ tag: 'interest-simple', value: P * (1 + r * n / 100), step: 0 }, { tag: 'interest-only', value: r2(A - P), step: 2 }], hint: L('A = P(1 + r)ⁿ', 'A = P(1 + r)ⁿ') };
+  }
+  const n = ri(2, 4), rr = pick([5, 8, 10]), A = P * (1 + rr / 100) ** n, CI = A - P, SI = P * rr * n / 100, d = r2(CI - SI);
+  return { text: L(`เงินต้น ${ex(P)} บาท อัตราร้อยละ ${ex(rr)} ต่อปี นาน ${ex(n)} ปี ดอกเบี้ยทบต้นมากกว่าดอกเบี้ยเชิงเดียวอยู่กี่บาท`, `Principal ${ex(P)} baht at ${ex(`${rr}%`)} per year for ${ex(n)} years. By how many baht does compound interest exceed simple interest?`), note, tol: 0.5, answer: d,
+    steps: [L(`ดอกเบี้ยเชิงเดียว ${ex(`${P} × ${rr} × ${n} / 100 = ${fmt(SI, 2)}`)}`, `Simple interest ${ex(`${P} × ${rr} × ${n} / 100 = ${fmt(SI, 2)}`)}`),
+      L(`ทบต้น ${ex(`A = ${P} × ${fmt(1 + rr / 100, 4)}${sup(n)} = ${fmt(A, 2)}`)} → ดอกเบี้ย ${ex(fmt(CI, 2))}`, `Compound ${ex(`A = ${P} × ${fmt(1 + rr / 100, 4)}${sup(n)} = ${fmt(A, 2)}`)} → interest ${ex(fmt(CI, 2))}`),
+      L(`ผลต่าง ${ex(`${fmt(CI, 2)} − ${fmt(SI, 2)} = ${fmt(d, 2)}`)}`, `Difference ${ex(`${fmt(CI, 2)} − ${fmt(SI, 2)} = ${fmt(d, 2)}`)}`)],
+    mistakes: [{ tag: 'interest-simple', value: SI, step: 0 }, { tag: 'interest-diff', value: r2(CI), step: 2 }, { tag: 'interest-only', value: r2(A), step: 2 }], hint: L('หาดอกเบี้ยทั้งสองแบบก่อน แล้วลบกัน', 'Compute both interests, then subtract') };
+}});
+
+def({ id: 'log', subject: 'math', grades: [5], name: L('ลอการิทึมและเลขชี้กำลัง', 'Logarithms & exponential equations'), gen(lv) {
+  if (lv === 1) {
+    const a = pick([2, 3, 5]), k = ri(2, 5), i = ri(1, k - 1), m = a ** i, n = a ** (k - i);
+    return { text: L(`จงหาค่าของ ${ex(`log${sub(a)} ${m} + log${sub(a)} ${n}`)}`, `Evaluate ${ex(`log${sub(a)} ${m} + log${sub(a)} ${n}`)}`), answer: k,
+      steps: [L(`รวมลอการิทึมฐานเดียวกัน: ${ex(`log${sub(a)}(${m} × ${n}) = log${sub(a)} ${m * n}`)}`, `Combine same-base logs: ${ex(`log${sub(a)}(${m} × ${n}) = log${sub(a)} ${m * n}`)}`),
+        L(`${ex(`${m * n} = ${a}${sup(k)}`)}`), L(`${ex(`log${sub(a)} ${a}${sup(k)} = ${k}`)}`)],
+      mistakes: [{ tag: 'log-sum', value: Math.log(m + n) / Math.log(a), step: 0 }], hint: L('log a + log b = log(ab)', 'log a + log b = log(ab)') };
+  }
+  if (lv === 2) {
+    const a = pick([2, 3]), b = pick([2, 3]);
+    let x, c0, E; do { x = ri(2, 5); c0 = nz(-5, 5); E = b * x + c0; } while (E < 1 || E > 7);
+    return { text: L(`จงแก้สมการ ${ex(`${a}${sup(poly([[b, 1], [c0, 0]]))} = ${a ** E}`)} หาค่า x`, `Solve ${ex(`${a}${sup(poly([[b, 1], [c0, 0]]))} = ${a ** E}`)} for x`), answer: x,
+      steps: [L(`เขียนทั้งสองข้างเป็นฐานเดียวกัน: ${ex(`${a ** E} = ${a}${sup(E)}`)}`, `Same base on both sides: ${ex(`${a ** E} = ${a}${sup(E)}`)}`),
+        L(`เทียบเลขชี้กำลัง: ${ex(`${poly([[b, 1], [c0, 0]])} = ${E}`)}`, `Equate exponents: ${ex(`${poly([[b, 1], [c0, 0]])} = ${E}`)}`),
+        L(`${ex(`${poly([[b, 1]])} = ${E - c0}`)} → ${ex(`x = ${x}`)}`)],
+      mistakes: [{ tag: 'transpose-sign', value: (E + c0) / b, step: 2 }, { tag: 'inverse-op', value: E - c0, step: 2 }], hint: L('ทำให้ฐานเท่ากัน แล้วเทียบเลขชี้กำลัง', 'Make the bases equal, then equate the exponents') };
+  }
+  const [a, k, c, X] = pick([[2, 4, 3, 5], [2, 3, 1, 3], [2, 5, 2, 6], [3, 2, 4, 5], [5, 2, 12, 13], [3, 3, 3, 6], [2, 6, 6, 10], [2, 8, 12, 20]]), P = a ** k;
+  return { text: L(`จงหาค่า x ที่ทำให้ ${ex(`log${sub(a)}(x − ${c}) + log${sub(a)}(x + ${c}) = ${k}`)} (โดย x > ${c})`, `Find x such that ${ex(`log${sub(a)}(x − ${c}) + log${sub(a)}(x + ${c}) = ${k}`)} (with x > ${c})`), answer: X,
+    steps: [L(`รวมลอการิทึม: ${ex(`log${sub(a)}[(x − ${c})(x + ${c})] = ${k}`)}`, `Combine: ${ex(`log${sub(a)}[(x − ${c})(x + ${c})] = ${k}`)}`),
+      L(`แปลงเป็นเลขยกกำลัง: ${ex(`x${sup(2)} − ${c * c} = ${a}${sup(k)} = ${P}`)}`, `Convert to a power: ${ex(`x${sup(2)} − ${c * c} = ${a}${sup(k)} = ${P}`)}`),
+      L(`${ex(`x${sup(2)} = ${P + c * c}`)} → ${ex(`x = ±${X}`)} เลือกค่าที่ x > ${c}: ${ex(`x = ${X}`)}`, `${ex(`x${sup(2)} = ${P + c * c}`)} → ${ex(`x = ±${X}`)}; keep x > ${c}: ${ex(`x = ${X}`)}`)],
+    mistakes: [{ tag: 'log-product', value: P / 2, step: 0 }, { tag: 'sqrt-forgot', value: P + c * c, step: 2 }, { tag: 'sign', value: Math.sqrt(P - c * c), step: 1 }], hint: L('รวมเป็น log เดียว แล้วแปลงเป็นรูปเลขยกกำลัง ตรวจโดเมนตอนท้าย', 'Merge into one log, convert to exponent form, check the domain at the end') };
+}});
+
+def({ id: 'combo', subject: 'math', grades: [5], name: L('การนับและการจัดหมู่', 'Counting: permutations & combinations'), gen(lv) {
+  if (lv === 1) {
+    const n = ri(5, 9), r = ri(2, 4), ans = nPr(n, r);
+    return { text: L(`นักเรียน ${ex(n)} คน เลือก ${ex(r)} คนมานั่งเก้าอี้เรียงกัน ${ex(r)} ตัว ได้กี่วิธี`, `${ex(n)} students; choose ${ex(r)} of them to sit in a row of ${ex(r)} chairs. How many ways?`), answer: ans,
+      steps: [L('ลำดับสำคัญ → การจัดเรียง', 'Order matters → permutation'), L(`${ex(`P(${n},${r}) = ${n}! / ${n - r}!`)}`), L(`${ex(`= ${ans}`)}`)],
+      mistakes: [{ tag: 'perm-comb', value: nCr(n, r), step: 0 }, { tag: 'formula', value: fact(n), step: 1 }], hint: L('nPr = n! / (n − r)!', 'nPr = n! / (n − r)!') };
+  }
+  if (lv === 2) {
+    const m = ri(4, 7), w = ri(3, 6), a = ri(2, 3), b = 2, ans = nCr(m, a) * nCr(w, b);
+    return { text: L(`มีชาย ${ex(m)} คน หญิง ${ex(w)} คน ต้องการเลือกกรรมการชุดหนึ่งประกอบด้วยชาย ${ex(a)} คน และหญิง ${ex(b)} คน ได้กี่วิธี`, `From ${ex(m)} men and ${ex(w)} women, choose a committee of ${ex(a)} men and ${ex(b)} women. How many ways?`), answer: ans,
+      steps: [L(`เลือกชาย: ${ex(`C(${m},${a}) = ${nCr(m, a)}`)}`, `Men: ${ex(`C(${m},${a}) = ${nCr(m, a)}`)}`), L(`เลือกหญิง: ${ex(`C(${w},${b}) = ${nCr(w, b)}`)}`, `Women: ${ex(`C(${w},${b}) = ${nCr(w, b)}`)}`), L(`ต้องเลือกทั้งสองอย่าง → คูณ: ${ex(`${nCr(m, a)} × ${nCr(w, b)} = ${ans}`)}`, `Both choices are made → multiply: ${ex(`${nCr(m, a)} × ${nCr(w, b)} = ${ans}`)}`)],
+      mistakes: [{ tag: 'counting-rule', value: nCr(m, a) + nCr(w, b), step: 2 }, { tag: 'perm-comb', value: nPr(m, a) * nPr(w, b), step: 0 }, { tag: 'formula', value: nCr(m + w, a + b), step: 0 }], hint: L('เลือกแต่ละกลุ่มด้วย C แล้วคูณกัน', 'Choose each group with C, then multiply') };
+  }
+  const n = ri(5, 8), together = Math.random() < 0.5, T = 2 * fact(n - 1), ans = together ? T : fact(n) - T;
+  return { text: L(`คน ${ex(n)} คนยืนเรียงแถว โดย ก. และ ข. ต้อง<b>${together ? 'ยืนติดกัน' : 'ไม่ยืนติดกัน'}</b> ได้กี่วิธี`, `${ex(n)} people stand in a line, with A and B <b>${together ? 'next to each other' : 'not next to each other'}</b>. How many arrangements?`), answer: ans,
+    steps: [L(`ติดกัน: มัด ก.+ข. เป็นหนึ่งหน่วย จัด ${n - 1} หน่วย ได้ ${ex(`${n - 1}! = ${fact(n - 1)}`)}`, `Together: glue A+B into one unit; arrange ${n - 1} units: ${ex(`${n - 1}! = ${fact(n - 1)}`)}`),
+      L(`สลับ ก.ข. ภายในมัดได้ ${ex('2!')}: ${ex(`2 × ${fact(n - 1)} = ${T}`)}`, `A and B can swap inside the unit (${ex('2!')}): ${ex(`2 × ${fact(n - 1)} = ${T}`)}`),
+      L(together ? `คำตอบ ${ex(T)}` : `ไม่ติดกัน = ทั้งหมด − ติดกัน: ${ex(`${n}! − ${T} = ${fact(n)} − ${T} = ${ans}`)}`, together ? `Answer ${ex(T)}` : `Not together = all − together: ${ex(`${n}! − ${T} = ${fact(n)} − ${T} = ${ans}`)}`)],
+    mistakes: together ? [{ tag: 'formula', value: fact(n), step: 0 }, { tag: 'half-forgot', value: fact(n - 1), step: 1 }] : [{ tag: 'formula', value: T, step: 2 }, { tag: 'half-forgot', value: fact(n) - fact(n - 1), step: 1 }], hint: L('มัดคนที่ต้องติดกันเป็นหนึ่งหน่วย อย่าลืมสลับที่ภายในมัด', 'Glue the pair into one unit — and remember they can swap inside it') };
+}});
+
+def({ id: 'mensur', subject: 'math', grades: [2, 3], name: L('พื้นที่และปริมาตรรูปประกอบ', 'Composite areas & volumes'), gen(lv) {
+  const note = L(`ใช้ π = ${PI_} ตอบทศนิยม 2 ตำแหน่ง`, `Use π = ${PI_}; answer to 2 decimal places`);
+  if (lv === 1) {
+    const w = pick([4, 6, 8, 10, 12]), h = ri(3, 12), r = w / 2, A = r2(w * h + 0.5 * PI_ * r * r);
+    return { text: L(`หน้าต่างรูปสี่เหลี่ยมผืนผ้ากว้าง ${ex(`${w} cm`)} สูง ${ex(`${h} cm`)} มีครึ่งวงกลมที่เส้นผ่านศูนย์กลางเท่าความกว้างต่อด้านบน พื้นที่รวมเท่าไร`, `A window is a ${ex(`${w} cm`)} × ${ex(`${h} cm`)} rectangle topped by a semicircle whose diameter equals the width. Total area?`), note, answer: A, unit: 'cm²', unitOpts: ['cm²', 'cm', 'cm³', 'm²'],
+      steps: [L(`สี่เหลี่ยม: ${ex(`${w} × ${h} = ${w * h}`)}`, `Rectangle: ${ex(`${w} × ${h} = ${w * h}`)}`), L(`รัศมี ${ex(`r = ${w}/2 = ${r}`)}; ครึ่งวงกลม ${ex(`½πr² = ½ × ${PI_} × ${r}² = ${fmt(0.5 * PI_ * r * r, 3)}`)}`, `Radius ${ex(`r = ${w}/2 = ${r}`)}; semicircle ${ex(`½πr² = ½ × ${PI_} × ${r}² = ${fmt(0.5 * PI_ * r * r, 3)}`)}`), L(`${ex(`${w * h} + ${fmt(0.5 * PI_ * r * r, 3)} ≈ ${fmt(A, 2)} cm²`)}`)],
+      mistakes: [{ tag: 'half-forgot', value: r2(w * h + PI_ * r * r), step: 1 }, { tag: 'formula', value: r2(w * h + 0.5 * PI_ * w * w), step: 1 }], hint: L('ครึ่งวงกลม = ½πr² โดย r คือครึ่งหนึ่งของเส้นผ่านศูนย์กลาง', 'Semicircle = ½πr², with r half the diameter') };
+  }
+  if (lv === 2) {
+    const r = ri(3, 15), t = ri(1, 4), R = r + t, A = r2(PI_ * (R * R - r * r));
+    return { text: L(`สระน้ำกลมรัศมี ${ex(`${r} m`)} มีทางเดินกว้าง ${ex(`${t} m`)} ล้อมรอบสระ พื้นที่ทางเดินเท่าไร`, `A circular pond of radius ${ex(`${r} m`)} is surrounded by a ${ex(`${t} m`)}-wide path. Area of the path?`), note, answer: A, unit: 'm²', unitOpts: ['m²', 'm', 'm³', 'cm²'],
+      steps: [L(`รัศมีนอก ${ex(`R = ${r} + ${t} = ${R}`)}`, `Outer radius ${ex(`R = ${r} + ${t} = ${R}`)}`), L(`${ex(`A = π(R² − r²) = ${PI_} × (${R * R} − ${r * r})`)}`), L(`${ex(`A ≈ ${fmt(A, 2)} m²`)}`)],
+      mistakes: [{ tag: 'ring-diff', value: r2(PI_ * t * t), step: 1 }, { tag: 'formula', value: r2(PI_ * R * R), step: 1 }], hint: L('พื้นที่ทางเดิน = วงกลมใหญ่ − วงกลมเล็ก', 'Path = big circle − small circle') };
+  }
+  const r = ri(2, 6), h = ri(3, 12), V = r2(PI_ * r * r * h + 2 / 3 * PI_ * r ** 3);
+  return { text: L(`ถังทรงกระบอกรัศมี ${ex(`${r} cm`)} สูง ${ex(`${h} cm`)} มีครึ่งทรงกลมรัศมีเท่ากันครอบอยู่ด้านบน ปริมาตรรวมเท่าไร`, `A cylinder of radius ${ex(`${r} cm`)} and height ${ex(`${h} cm`)} has a hemisphere of the same radius on top. Total volume?`), note, answer: V, unit: 'cm³', unitOpts: ['cm³', 'cm²', 'cm', 'm³'],
+    steps: [L(`ทรงกระบอก: ${ex(`πr²h = ${PI_} × ${r * r} × ${h} = ${fmt(PI_ * r * r * h, 3)}`)}`, `Cylinder: ${ex(`πr²h = ${PI_} × ${r * r} × ${h} = ${fmt(PI_ * r * r * h, 3)}`)}`), L(`ครึ่งทรงกลม: ${ex(`⅔πr³ = ⅔ × ${PI_} × ${r ** 3} = ${fmt(2 / 3 * PI_ * r ** 3, 3)}`)}`, `Hemisphere: ${ex(`⅔πr³ = ⅔ × ${PI_} × ${r ** 3} = ${fmt(2 / 3 * PI_ * r ** 3, 3)}`)}`), L(`${ex(`V ≈ ${fmt(V, 2)} cm³`)}`)],
+    mistakes: [{ tag: 'half-forgot', value: r2(PI_ * r * r * h + 4 / 3 * PI_ * r ** 3), step: 1 }, { tag: 'formula', value: r2(PI_ * r * r * h), step: 1 }, { tag: 'formula', value: r2(PI_ * r * r * h + PI_ * r ** 3 / 3), step: 1 }], hint: L('ครึ่งทรงกลม = ½ × (4/3)πr³', 'Hemisphere = ½ × (4/3)πr³') };
+}});
+
+def({ id: 'stat', subject: 'math', grades: [3, 6], name: L('สถิติ: ค่าเฉลี่ยและส่วนเบี่ยงเบนมาตรฐาน', 'Statistics: mean & standard deviation'), gen(lv) {
+  if (lv === 1) {
+    const d = Array.from({ length: 6 }, () => ri(5, 40)), s = d.reduce((x, y) => x + y, 0), m = r2(s / 6);
+    return { text: L(`ข้อมูลชุดหนึ่ง: ${ex(d.join(', '))} ค่าเฉลี่ยเลขคณิตเท่าไร`, `For the data ${ex(d.join(', '))}, what is the arithmetic mean?`), note: NOTE_2DP, answer: m,
+      steps: [L(`ผลรวม ${ex(`${d.join(' + ')} = ${s}`)}`, `Sum ${ex(`${d.join(' + ')} = ${s}`)}`), L(`${ex(`x̄ = ${s} / 6 ≈ ${fmt(m, 2)}`)}`)],
+      mistakes: [{ tag: 'formula', value: r2(s / 5), step: 1 }], hint: L('ค่าเฉลี่ย = ผลรวม ÷ จำนวนข้อมูล', 'Mean = sum ÷ count') };
+  }
+  if (lv === 2) {
+    const n = 5, d = Array.from({ length: 4 }, () => ri(5, 40)), mean = ri(10, 35), x = n * mean - d.reduce((a, b) => a + b, 0);
+    if (x < 0) return this.gen(lv);
+    return { text: L(`ข้อมูล 5 ค่า คือ ${ex(`${d.join(', ')}`)} และอีกหนึ่งค่า ถ้าค่าเฉลี่ยเลขคณิตของทั้ง 5 ค่าเท่ากับ ${ex(mean)} ค่าที่หายไปคือเท่าไร`, `Five values: ${ex(d.join(', '))} and one more. The mean of all five is ${ex(mean)}. Find the missing value.`), answer: x,
+      steps: [L(`ผลรวมทั้งหมด ${ex(`5 × ${mean} = ${5 * mean}`)}`, `Total ${ex(`5 × ${mean} = ${5 * mean}`)}`), L(`ผลรวม 4 ค่าที่ทราบ ${ex(`${d.join(' + ')} = ${d.reduce((a, b) => a + b, 0)}`)}`, `Known four sum ${ex(`${d.join(' + ')} = ${d.reduce((a, b) => a + b, 0)}`)}`), L(`${ex(`x = ${5 * mean} − ${d.reduce((a, b) => a + b, 0)} = ${x}`)}`)],
+      mistakes: [{ tag: 'formula', value: 4 * mean - d.reduce((a, b) => a + b, 0), step: 0 }, { tag: 'sign', value: 5 * mean + d.reduce((a, b) => a + b, 0), step: 2 }], hint: L('ผลรวม = ค่าเฉลี่ย × จำนวนข้อมูลทั้งหมด (รวมค่าที่หายไป)', 'Total = mean × count (including the missing value)') };
+  }
+  let d, s;
+  do { d = Array.from({ length: 5 }, () => ri(2, 20)); s = d.reduce((a, b) => a + b, 0); } while (s % 5 !== 0);
+  const mu = s / 5, devs = d.map(v => (v - mu) ** 2), ss = devs.reduce((a, b) => a + b, 0), sd = r2(Math.sqrt(ss / 5));
+  return { text: L(`จงหาส่วนเบี่ยงเบนมาตรฐาน (ประชากร) ของข้อมูล ${ex(d.join(', '))}`, `Find the population standard deviation of ${ex(d.join(', '))}`), note: NOTE_2DP, answer: sd,
+    steps: [L(`ค่าเฉลี่ย ${ex(`μ = ${s}/5 = ${mu}`)}`, `Mean ${ex(`μ = ${s}/5 = ${mu}`)}`), L(`${ex(`Σ(x − μ)² = ${devs.join(' + ')} = ${ss}`)}`), L(`ความแปรปรวน ${ex(`σ² = ${ss}/5 = ${fmt(ss / 5, 3)}`)}`, `Variance ${ex(`σ² = ${ss}/5 = ${fmt(ss / 5, 3)}`)}`), L(`${ex(`σ = √${fmt(ss / 5, 3)} ≈ ${fmt(sd, 2)}`)}`)],
+    mistakes: [{ tag: 'sqrt-forgot', value: r2(ss / 5), step: 3 }, { tag: 'sd-n', value: r2(Math.sqrt(ss / 4)), step: 2 }], hint: L('σ = √(Σ(x − μ)² / N)', 'σ = √(Σ(x − μ)² / N)') };
+}});
+
+def({ id: 'integral', subject: 'math', grades: [6], name: L('ปริพันธ์จำกัดเขตและพื้นที่', 'Definite integrals & area'), gen(lv) {
+  const lim = (L0, b) => `∫${sub(L0)}${sup(b)}`;
+  if (lv === 1) {
+    const a = pick([2, 4, 6, 8]), c = nz(-6, 6), L0 = ri(1, 3), b = L0 + ri(1, 4), F = x => a * x * x / 2 + c * x, ans = F(b) - F(L0);
+    return { text: L(`จงหาค่าของ ${ex(`${lim(L0, b)} (${poly([[a, 1], [c, 0]])}) dx`)}`, `Evaluate ${ex(`${lim(L0, b)} (${poly([[a, 1], [c, 0]])}) dx`)}`), answer: ans,
+      steps: [L(`ปริพันธ์ไม่จำกัดเขต ${ex(`F(x) = ${poly([[a / 2, 2], [c, 1]])}`)}`, `Antiderivative ${ex(`F(x) = ${poly([[a / 2, 2], [c, 1]])}`)}`), L(`${ex(`F(${b}) = ${n2s(F(b))}`)}, ${ex(`F(${L0}) = ${n2s(F(L0))}`)}`), L(`${ex(`F(${b}) − F(${L0}) = ${n2s(ans)}`)}`)],
+      mistakes: [{ tag: 'integral-limits', value: F(b), step: 2 }, { tag: 'integral-power', value: a * (b * b - L0 * L0) + c * (b - L0), step: 0 }], hint: L('∫ₐᵇ f dx = F(b) − F(a)', '∫ₐᵇ f dx = F(b) − F(a)') };
+  }
+  if (lv === 2) {
+    const c = pick([3, 6, 9, -3, -6]), d = pick([2, 4, 6, -2, -4]), e = nz(-8, 8), L0 = ri(0, 2), b = L0 + ri(1, 3);
+    const F = x => c / 3 * x ** 3 + d / 2 * x * x + e * x, ans = F(b) - F(L0);
+    return { text: L(`จงหาค่าของ ${ex(`${lim(L0, b)} (${poly([[c, 2], [d, 1], [e, 0]])}) dx`)}`, `Evaluate ${ex(`${lim(L0, b)} (${poly([[c, 2], [d, 1], [e, 0]])}) dx`)}`), answer: ans,
+      steps: [L(`หาปริพันธ์ทีละพจน์ ${ex(`F(x) = ${poly([[c / 3, 3], [d / 2, 2], [e, 1]])}`)}`, `Integrate term by term ${ex(`F(x) = ${poly([[c / 3, 3], [d / 2, 2], [e, 1]])}`)}`), L(`${ex(`F(${b}) = ${n2s(F(b))}`)}, ${ex(`F(${L0}) = ${n2s(F(L0))}`)}`), L(`${ex(`${n2s(F(b))} − ${neg(F(L0))} = ${n2s(ans)}`)}`)],
+      mistakes: [{ tag: 'integral-power', value: c * (b ** 3 - L0 ** 3) + d * (b * b - L0 * L0) + e * (b - L0), step: 0 }, { tag: 'integral-limits', value: F(b), step: 2 }, { tag: 'sign', value: F(b) + F(L0), step: 2 }], hint: L('เพิ่มเลขชี้กำลังขึ้น 1 แล้วหารด้วยเลขชี้กำลังใหม่', 'Raise the exponent by 1 and divide by the new exponent') };
+  }
+  const a = pick([1, 2]), b = pick([2, 3, 4, 5, 6]), num = b ** 3, den = 6 * a * a;
+  return { text: L(`จงหาพื้นที่ที่ปิดล้อมด้วยกราฟ ${ex(`y = ${a === 1 ? '' : a}x${sup(2)}`)} และเส้นตรง ${ex(`y = ${b}x`)}`, `Find the area enclosed by ${ex(`y = ${a === 1 ? '' : a}x${sup(2)}`)} and the line ${ex(`y = ${b}x`)}`), note: NOTE_FRAC, answer: num / den, answerText: fracStr(num, den),
+    steps: [L(`จุดตัด: ${ex(`${a === 1 ? '' : a}x${sup(2)} = ${b}x`)} → ${ex(`x = 0`)} และ ${ex(`x = ${fracStr(b, a)}`)}`, `Intersections: ${ex(`${a === 1 ? '' : a}x${sup(2)} = ${b}x`)} → ${ex(`x = 0`)} and ${ex(`x = ${fracStr(b, a)}`)}`),
+      L(`เส้นตรงอยู่บน: ${ex(`A = ∫${sub(0)}${sup(fracStr(b, a))} (${b}x − ${a === 1 ? '' : a}x${sup(2)}) dx`)}`, `The line is above: ${ex(`A = ∫${sub(0)}${sup(fracStr(b, a))} (${b}x − ${a === 1 ? '' : a}x${sup(2)}) dx`)}`),
+      L(`${ex(`A = ${b}³ / (6 × ${a * a}) = ${fracStr(num, den)}`)}`)],
+    mistakes: [{ tag: 'integral-setup', value: num / (2 * a * a), step: 1 }, { tag: 'integral-setup', value: num / (3 * a * a), step: 1 }], hint: L('พื้นที่ = ∫(เส้นบน − เส้นล่าง) dx จากจุดตัดซ้ายไปขวา', 'Area = ∫(upper − lower) dx between the intersections') };
+}});
+
+/* ===== PHYSICS — multi-step & applied ===== */
+const sinD = d => Math.sin(d * Math.PI / 180), cosD = d => Math.cos(d * Math.PI / 180);
+
+def({ id: 'incline', subject: 'physics', grades: [4], name: L('ระนาบเอียงและแรงเสียดทาน', 'Inclined plane & friction'), gen(lv) {
+  const gNote = L(`ใช้ g = ${G_} m/s² ตอบทศนิยม 2 ตำแหน่ง`, `Use g = ${G_} m/s²; answer to 2 decimal places`);
+  if (lv === 1) {
+    const th = pick([30, 37, 45, 53, 60]), a = r2(G_ * sinD(th));
+    return { text: L(`กล่องไถลลงตามระนาบเอียงลื่นที่เอียง ${ex(`${th}°`)} จากแนวราบ ความเร่งของกล่องเท่าไร`, `A box slides down a frictionless incline at ${ex(`${th}°`)}. Its acceleration?`), note: gNote, answer: a, unit: 'm/s²', unitOpts: ['m/s²', 'm/s', 'N', 'J'],
+      steps: [L(`แรงขนานระนาบ ${ex('mg sin θ')} เป็นแรงลัพธ์`, `The force along the slope ${ex('mg sin θ')} is the net force`), L(`${ex(`a = g sin ${th}° = ${G_} × ${fmt(sinD(th), 4)}`)}`), L(`${ex(`a ≈ ${fmt(a, 2)} m/s²`)}`)],
+      mistakes: [{ tag: 'trig-ratio', value: r2(G_ * cosD(th)), step: 0 }, { tag: 'formula', value: G_, step: 0 }], hint: L('a = g sin θ', 'a = g sin θ') };
+  }
+  if (lv === 2) {
+    const th = pick([37, 45, 53, 60]), mu = pick([0.1, 0.2, 0.25, 0.3]), a = r2(G_ * (sinD(th) - mu * cosD(th)));
+    return { text: L(`กล่องไถลลงตามระนาบเอียง ${ex(`${th}°`)} ที่มีสัมประสิทธิ์ความเสียดทานจลน์ ${ex(`μ = ${mu}`)} ความเร่งของกล่องเท่าไร`, `A box slides down a ${ex(`${th}°`)} incline with kinetic friction ${ex(`μ = ${mu}`)}. Its acceleration?`), note: gNote, answer: a, unit: 'm/s²', unitOpts: ['m/s²', 'm/s', 'N', 'J'],
+      steps: [L(`แรงตั้งฉาก ${ex('N = mg cos θ')} ดังนั้นแรงเสียดทาน ${ex('f = μmg cos θ')}`, `Normal force ${ex('N = mg cos θ')}, so friction ${ex('f = μmg cos θ')}`), L(`${ex('ma = mg sin θ − μmg cos θ')} → ${ex('a = g(sin θ − μ cos θ)')}`), L(`${ex(`a = ${G_}(${fmt(sinD(th), 4)} − ${mu} × ${fmt(cosD(th), 4)}) ≈ ${fmt(a, 2)} m/s²`)}`)],
+      mistakes: [{ tag: 'vector-direction', value: r2(G_ * (sinD(th) + mu * cosD(th))), step: 1 }, { tag: 'trig-ratio', value: r2(G_ * (sinD(th) - mu)), step: 0 }, { tag: 'net-force', value: r2(G_ * sinD(th)), step: 1 }], hint: L('แรงเสียดทานต้านการเคลื่อนที่ จึงลบออกจากแรงขนานระนาบ', 'Friction opposes motion, so subtract it from the force along the slope') };
+  }
+  const th = pick([37, 45, 53, 60]), mu = pick([0.1, 0.2, 0.25, 0.3]), d = ri(2, 12), a = G_ * (sinD(th) - mu * cosD(th)), v = r2(Math.sqrt(2 * a * d));
+  return { text: L(`ปล่อยกล่องจากหยุดนิ่งบนระนาบเอียง ${ex(`${th}°`)} (${ex(`μ = ${mu}`)}) ไถลลงตามระนาบเป็นระยะ ${ex(`${d} m`)} อัตราเร็วที่ปลายระยะเท่าไร`, `A box is released from rest on a ${ex(`${th}°`)} incline (${ex(`μ = ${mu}`)}) and slides ${ex(`${d} m`)} down the slope. Its speed at the end?`), note: gNote, answer: v, unit: 'm/s', unitOpts: ['m/s', 'm/s²', 'J', 'N'],
+    steps: [L(`ความเร่ง ${ex(`a = g(sin θ − μ cos θ) = ${fmt(a, 3)} m/s²`)}`, `Acceleration ${ex(`a = g(sin θ − μ cos θ) = ${fmt(a, 3)} m/s²`)}`), L(`${ex('v² = u² + 2as')} โดย u = 0: ${ex(`v² = 2 × ${fmt(a, 3)} × ${d} = ${fmt(2 * a * d, 3)}`)}`, `${ex('v² = u² + 2as')} with u = 0: ${ex(`v² = 2 × ${fmt(a, 3)} × ${d} = ${fmt(2 * a * d, 3)}`)}`), L(`${ex(`v ≈ ${fmt(v, 2)} m/s`)}`)],
+    mistakes: [{ tag: 'net-force', value: r2(Math.sqrt(2 * G_ * sinD(th) * d)), step: 0 }, { tag: 'sqrt-forgot', value: r2(2 * a * d), step: 2 }, { tag: 'half-forgot', value: r2(Math.sqrt(a * d)), step: 1 }], hint: L('หาความเร่งก่อน (รวมแรงเสียดทาน) แล้วใช้ v² = 2as', 'Find the acceleration first (with friction), then use v² = 2as') };
+}});
+
+def({ id: 'pulley', subject: 'physics', grades: [4], name: L('รอกและระบบมวลเชื่อมกัน', 'Pulleys & connected masses'), gen(lv) {
+  const gNote = L(`ใช้ g = ${G_} m/s² เชือกเบา รอกไม่มีเสียดทาน ตอบทศนิยม 2 ตำแหน่ง`, `Use g = ${G_} m/s²; light rope, frictionless pulley; 2 d.p.`);
+  if (lv === 1) {
+    const m1 = ri(1, 5), m2 = ri(m1 + 1, 10), a = r2((m2 - m1) * G_ / (m1 + m2));
+    return { text: L(`มวล ${ex(`${m1} kg`)} และ ${ex(`${m2} kg`)} แขวนที่ปลายเชือกสองข้างของรอกลื่น ปล่อยให้เคลื่อนที่ ความเร่งของระบบเท่าไร`, `Masses ${ex(`${m1} kg`)} and ${ex(`${m2} kg`)} hang from either end of a rope over a smooth pulley. Acceleration of the system?`), note: gNote, answer: a, unit: 'm/s²', unitOpts: ['m/s²', 'N', 'm/s', 'kg'],
+      steps: [L(`แรงลัพธ์ของระบบ ${ex(`(m₂ − m₁)g = (${m2} − ${m1})(${G_}) = ${(m2 - m1) * G_} N`)}`, `Net force on the system ${ex(`(m₂ − m₁)g = (${m2} − ${m1})(${G_}) = ${(m2 - m1) * G_} N`)}`), L(`มวลรวม ${ex(`${m1} + ${m2} = ${m1 + m2} kg`)}`, `Total mass ${ex(`${m1} + ${m2} = ${m1 + m2} kg`)}`), L(`${ex(`a = ${(m2 - m1) * G_} / ${m1 + m2} ≈ ${fmt(a, 2)} m/s²`)}`)],
+      mistakes: [{ tag: 'gravity-forgot', value: r2((m2 - m1) / (m1 + m2)), step: 0 }, { tag: 'mass-total', value: r2((m2 - m1) * G_ / m2), step: 1 }], hint: L('a = (m₂ − m₁)g / (m₁ + m₂)', 'a = (m₂ − m₁)g / (m₁ + m₂)') };
+  }
+  if (lv === 2) {
+    const m1 = ri(1, 5), m2 = ri(m1 + 1, 10), T = r2(2 * m1 * m2 * G_ / (m1 + m2));
+    return { text: L(`มวล ${ex(`${m1} kg`)} และ ${ex(`${m2} kg`)} แขวนที่ปลายเชือกสองข้างของรอกลื่น แรงตึงเชือกเท่าไร`, `Masses ${ex(`${m1} kg`)} and ${ex(`${m2} kg`)} hang over a smooth pulley. Tension in the rope?`), note: gNote, answer: T, unit: 'N', unitOpts: ['N', 'm/s²', 'kg', 'J'],
+      steps: [L(`ความเร่ง ${ex(`a = (m₂ − m₁)g/(m₁ + m₂) = ${fmt((m2 - m1) * G_ / (m1 + m2), 3)} m/s²`)}`, `Acceleration ${ex(`a = (m₂ − m₁)g/(m₁ + m₂) = ${fmt((m2 - m1) * G_ / (m1 + m2), 3)} m/s²`)}`), L(`มวลเบา ${m1} kg ถูกดึงขึ้น: ${ex(`T − m₁g = m₁a`)} → ${ex(`T = m₁(g + a) = ${m1}(${G_} + ${fmt((m2 - m1) * G_ / (m1 + m2), 3)})`)}`, `The lighter ${m1} kg accelerates upward: ${ex(`T − m₁g = m₁a`)} → ${ex(`T = m₁(g + a) = ${m1}(${G_} + ${fmt((m2 - m1) * G_ / (m1 + m2), 3)})`)}`), L(`${ex(`T ≈ ${fmt(T, 2)} N`)}`)],
+      mistakes: [{ tag: 'tension-block', value: m2 * G_, step: 1 }, { tag: 'formula', value: (m1 + m2) * G_ / 2, step: 1 }, { tag: 'half-forgot', value: r2(m1 * m2 * G_ / (m1 + m2)), step: 1 }], hint: L('พิจารณามวลก้อนเดียว: แรงตึงและน้ำหนักให้แรงลัพธ์ = ma', 'Isolate one mass: tension and weight give net force = ma') };
+  }
+  const m1 = ri(2, 8), m2 = ri(3, 10), mu = pick([0.1, 0.2, 0.3]), a = (m2 - mu * m1) * G_ / (m1 + m2), T = r2(m1 * (a + mu * G_));
+  return { text: L(`ก้อนมวล ${ex(`${m1} kg`)} อยู่บนโต๊ะที่มีความเสียดทาน ${ex(`μ = ${mu}`)} ผูกเชือกพาดรอกลื่นปลายโต๊ะ ปลายอีกด้านแขวนมวล ${ex(`${m2} kg`)} แรงตึงเชือกเท่าไร`, `A ${ex(`${m1} kg`)} block on a table (friction ${ex(`μ = ${mu}`)}) is tied over a smooth pulley at the table edge to a hanging ${ex(`${m2} kg`)} mass. Tension in the rope?`), note: gNote, answer: T, unit: 'N', unitOpts: ['N', 'm/s²', 'kg', 'J'],
+    steps: [L(`ทั้งระบบ: ${ex(`m₂g − μm₁g = (m₁ + m₂)a`)} → ${ex(`a = ${fmt(a, 3)} m/s²`)}`, `Whole system: ${ex(`m₂g − μm₁g = (m₁ + m₂)a`)} → ${ex(`a = ${fmt(a, 3)} m/s²`)}`),
+      L(`ก้อนบนโต๊ะ: ${ex(`T − μm₁g = m₁a`)} → ${ex(`T = m₁(a + μg) = ${m1}(${fmt(a, 3)} + ${fmt(mu * G_, 2)})`)}`, `Block on the table: ${ex(`T − μm₁g = m₁a`)} → ${ex(`T = m₁(a + μg) = ${m1}(${fmt(a, 3)} + ${fmt(mu * G_, 2)})`)}`), L(`${ex(`T ≈ ${fmt(T, 2)} N`)}`)],
+    mistakes: [{ tag: 'net-force', value: r2(m1 * a), step: 1 }, { tag: 'tension-block', value: m2 * G_, step: 1 }, { tag: 'vector-direction', value: r2(m1 * (a - mu * G_)), step: 1 }], hint: L('เขียน ΣF = ma ของก้อนบนโต๊ะ อย่าลืมแรงเสียดทาน', 'Write ΣF = ma for the table block — include friction') };
+}});
+
+def({ id: 'heat', subject: 'physics', grades: [5], name: L('ความร้อนและการผสมสาร', 'Heat & calorimetry'), gen(lv) {
+  const cw = 4200, note = L('น้ำมีความจุความร้อนจำเพาะ 4200 J/(kg·K) ตอบทศนิยม 2 ตำแหน่ง', 'Water: c = 4200 J/(kg·K). Answer to 2 d.p.');
+  if (lv === 1) {
+    const g = ri(1, 10) * 50, T1 = ri(15, 30), T2 = T1 + ri(20, 70), dT = T2 - T1, Q = g / 1000 * cw * dT;
+    return { text: L(`ต้มน้ำ ${ex(`${g} g`)} จาก ${ex(`${T1} °C`)} ถึง ${ex(`${T2} °C`)} ต้องใช้พลังงานความร้อนเท่าไร`, `How much heat is needed to warm ${ex(`${g} g`)} of water from ${ex(`${T1} °C`)} to ${ex(`${T2} °C`)}?`), note, answer: Q, unit: 'J', unitOpts: ['J', 'W', '°C', 'kg'],
+      steps: [L(`แปลงมวล ${ex(`${g} g = ${g / 1000} kg`)}`, `Convert mass ${ex(`${g} g = ${g / 1000} kg`)}`), L(`${ex(`ΔT = ${T2} − ${T1} = ${dT} K`)}`), L(`${ex(`Q = mcΔT = ${g / 1000} × ${cw} × ${dT} = ${fmt(Q, 2)} J`)}`)],
+      mistakes: [{ tag: 'unit-convert', value: g * cw * dT, step: 0 }, { tag: 'formula', value: g / 1000 * cw * T2, step: 1 }], hint: L('Q = mcΔT (มวลหน่วย kg)', 'Q = mcΔT (mass in kg)') };
+  }
+  if (lv === 2) {
+    const m1 = pick([0.5, 1, 1.5, 2, 3]), m2 = pick([0.5, 1, 2, 2.5, 4]), T1 = ri(50, 90), T2 = ri(10, 30), Tf = r2((m1 * T1 + m2 * T2) / (m1 + m2));
+    return { text: L(`ผสมน้ำร้อน ${ex(`${m1} kg`)} อุณหภูมิ ${ex(`${T1} °C`)} กับน้ำเย็น ${ex(`${m2} kg`)} อุณหภูมิ ${ex(`${T2} °C`)} อุณหภูมิสุดท้ายเท่าไร (ไม่คิดการสูญเสียความร้อน)`, `${ex(`${m1} kg`)} of water at ${ex(`${T1} °C`)} is mixed with ${ex(`${m2} kg`)} at ${ex(`${T2} °C`)}. Final temperature? (no heat loss)`), note, answer: Tf, unit: '°C', unitOpts: ['°C', 'J', 'K', 'kg'],
+      steps: [L(`ความร้อนที่น้ำร้อนเสีย = ที่น้ำเย็นได้: ${ex(`m₁(T₁ − T) = m₂(T − T₂)`)}`, `Heat lost = heat gained: ${ex(`m₁(T₁ − T) = m₂(T − T₂)`)}`), L(`${ex(`T = (m₁T₁ + m₂T₂)/(m₁ + m₂) = (${m1 * T1} + ${m2 * T2}) / ${m1 + m2}`)}`), L(`${ex(`T ≈ ${fmt(Tf, 2)} °C`)}`)],
+      mistakes: [{ tag: 'temp-avg', value: (T1 + T2) / 2, step: 0 }, { tag: 'var-swap', value: r2((m1 * T2 + m2 * T1) / (m1 + m2)), step: 1 }], hint: L('อุณหภูมิสุดท้ายอยู่ใกล้ฝั่งที่มวลมากกว่า', 'The result lies closer to the temperature of the larger mass') };
+  }
+  const mm = pick([0.1, 0.2, 0.3, 0.5]), cm = pick([390, 450, 900]), T1 = ri(150, 300), mw = pick([0.2, 0.3, 0.4, 0.5]), T2 = ri(20, 30), Tf = r2((mm * cm * T1 + mw * cw * T2) / (mm * cm + mw * cw));
+  return { text: L(`โลหะมวล ${ex(`${mm} kg`)} (c = ${ex(`${cm} J/(kg·K)`)}) อุณหภูมิ ${ex(`${T1} °C`)} จุ่มลงในน้ำ ${ex(`${mw} kg`)} อุณหภูมิ ${ex(`${T2} °C`)} อุณหภูมิสุดท้ายเมื่อสมดุลความร้อนเท่าไร`, `A ${ex(`${mm} kg`)} metal (c = ${ex(`${cm} J/(kg·K)`)}) at ${ex(`${T1} °C`)} is dropped into ${ex(`${mw} kg`)} of water at ${ex(`${T2} °C`)}. Final equilibrium temperature?`), note, answer: Tf, unit: '°C', unitOpts: ['°C', 'J', 'K', 'kg'],
+    steps: [L(`ความร้อนที่โลหะเสีย = ที่น้ำได้: ${ex(`m_m c_m (T₁ − T) = m_w c_w (T − T₂)`)}`, `Heat lost by metal = heat gained by water: ${ex(`m_m c_m (T₁ − T) = m_w c_w (T − T₂)`)}`), L(`${ex(`m_m c_m = ${fmt(mm * cm, 2)}`)}, ${ex(`m_w c_w = ${fmt(mw * cw, 2)}`)}`), L(`${ex(`T = (${fmt(mm * cm * T1, 2)} + ${fmt(mw * cw * T2, 2)}) / ${fmt(mm * cm + mw * cw, 2)} ≈ ${fmt(Tf, 2)} °C`)}`)],
+    mistakes: [{ tag: 'temp-avg', value: (T1 + T2) / 2, step: 0 }, { tag: 'temp-avg', value: r2((mm * T1 + mw * T2) / (mm + mw)), step: 1 }, { tag: 'var-swap', value: r2((mm * cw * T1 + mw * cm * T2) / (mm * cw + mw * cm)), step: 1 }], hint: L('ถ่วงน้ำหนักด้วย mc (มวล × ความจุความร้อนจำเพาะ)', 'Weight each temperature by mc (mass × specific heat)') };
+}});
+
+def({ id: 'lens', subject: 'physics', grades: [6], name: L('เลนส์บาง', 'Thin lenses'), gen(lv) {
+  const note = L('เลนส์นูน วัตถุจริง ภาพจริง: 1/f = 1/u + 1/v ตอบทศนิยม 2 ตำแหน่ง', 'Convex lens, real object and real image: 1/f = 1/u + 1/v. 2 d.p.');
+  if (lv === 1) {
+    const f = ri(5, 20), u = f + ri(3, 25), v = r2(u * f / (u - f));
+    return { text: L(`เลนส์นูนมีความยาวโฟกัส ${ex(`${f} cm`)} วางวัตถุห่างเลนส์ ${ex(`${u} cm`)} ภาพเกิดห่างเลนส์เท่าไร`, `A convex lens has focal length ${ex(`${f} cm`)}. An object is ${ex(`${u} cm`)} from it. How far from the lens is the image?`), note, answer: v, unit: 'cm', unitOpts: ['cm', 'm', 'cm⁻¹', 's'],
+      steps: [L(`${ex(`1/v = 1/f − 1/u = 1/${f} − 1/${u}`)}`), L(`${ex(`1/v = ${fmt(1 / f - 1 / u, 5)}`)}`), L(`กลับเศษส่วน: ${ex(`v ≈ ${fmt(v, 2)} cm`)}`, `Flip: ${ex(`v ≈ ${fmt(v, 2)} cm`)}`)],
+      mistakes: [{ tag: 'reciprocal-forgot', value: r2(1 / f - 1 / u, 4), step: 2 }, { tag: 'formula', value: r2(u * f / (u + f)), step: 0 }, { tag: 'formula', value: u + f, step: 0 }], hint: L('1/v = 1/f − 1/u แล้วกลับเศษส่วน', '1/v = 1/f − 1/u, then flip') };
+  }
+  if (lv === 2) {
+    const f = ri(5, 20), u = f + ri(5, 25), h = ri(2, 8), v = u * f / (u - f), hi = r2(h * v / u);
+    return { text: L(`วัตถุสูง ${ex(`${h} cm`)} วางห่างเลนส์นูน (f = ${ex(`${f} cm`)}) ${ex(`${u} cm`)} ภาพที่ได้สูงเท่าไร`, `A ${ex(`${h} cm`)}-tall object is ${ex(`${u} cm`)} from a convex lens (f = ${ex(`${f} cm`)}). How tall is the image?`), note, answer: hi, unit: 'cm', unitOpts: ['cm', 'cm²', 'm', 's'],
+      steps: [L(`ระยะภาพ ${ex(`v = uf/(u − f) = ${u * f}/${u - f} = ${fmt(v, 3)} cm`)}`, `Image distance ${ex(`v = uf/(u − f) = ${u * f}/${u - f} = ${fmt(v, 3)} cm`)}`), L(`กำลังขยาย ${ex(`m = v/u = ${fmt(v / u, 4)}`)}`, `Magnification ${ex(`m = v/u = ${fmt(v / u, 4)}`)}`), L(`${ex(`h′ = m × h = ${fmt(v / u, 4)} × ${h} ≈ ${fmt(hi, 2)} cm`)}`)],
+      mistakes: [{ tag: 'formula-swap', value: r2(h * u / v), step: 1 }, { tag: 'formula', value: r2(v), step: 1 }], hint: L('กำลังขยาย = v/u = ความสูงภาพ/ความสูงวัตถุ', 'Magnification = v/u = image height / object height') };
+  }
+  const f = ri(5, 20), m = pick([1.5, 2, 2.5, 3, 4]), v = r2(f * (m + 1));
+  return { text: L(`ต้องการภาพจริงบนฉากที่ขนาดเป็น ${ex(m)} เท่าของวัตถุ โดยใช้เลนส์นูน f = ${ex(`${f} cm`)} ต้องวางฉากห่างเลนส์เท่าไร`, `Using a convex lens (f = ${ex(`${f} cm`)}) you want a real image ${ex(m)} times the object’s size on a screen. How far from the lens must the screen be?`), note, answer: v, unit: 'cm', unitOpts: ['cm', 'm', 'cm⁻¹', 's'],
+    steps: [L(`${ex(`m = v/u`)} → ${ex(`u = v/${m}`)}`, `${ex(`m = v/u`)} → ${ex(`u = v/${m}`)}`), L(`${ex(`1/f = 1/u + 1/v = ${m}/v + 1/v = ${m + 1}/v`)}`), L(`${ex(`v = f(m + 1) = ${f} × ${m + 1} = ${fmt(v, 2)} cm`)}`)],
+    mistakes: [{ tag: 'formula', value: r2(f * m), step: 1 }, { tag: 'var-swap', value: r2(f * (m + 1) / m), step: 1 }, { tag: 'sign', value: r2(f * (m - 1)), step: 1 }], hint: L('แทน u = v/m ในสูตรเลนส์ เพื่อให้เหลือตัวแปร v ตัวเดียว', 'Substitute u = v/m into the lens formula to leave only v') };
+}});
+
+def({ id: 'circular', subject: 'physics', grades: [4, 5], name: L('การเคลื่อนที่แบบวงกลม', 'Circular motion'), gen(lv) {
+  const gNote = L(`ใช้ g = ${G_} m/s² ตอบทศนิยม 2 ตำแหน่ง`, `Use g = ${G_} m/s²; 2 d.p.`);
+  if (lv === 1) {
+    const v = ri(2, 20), r = ri(2, 50), a = r2(v * v / r);
+    return { text: L(`รถวิ่งรอบทางโค้งวงกลมรัศมี ${ex(`${r} m`)} ด้วยอัตราเร็วคงที่ ${ex(`${v} m/s`)} ความเร่งเข้าสู่ศูนย์กลางเท่าไร`, `A car drives round a circular bend of radius ${ex(`${r} m`)} at a steady ${ex(`${v} m/s`)}. Centripetal acceleration?`), note: NOTE_2DP, answer: a, unit: 'm/s²', unitOpts: ['m/s²', 'm/s', 'N', 'rad/s'],
+      steps: [L(`${ex('a = v² / r')}`), L(`${ex(`a = ${v}² / ${r} = ${v * v} / ${r} ≈ ${fmt(a, 2)} m/s²`)}`)],
+      mistakes: [{ tag: 'square-forgot', value: r2(v / r), step: 0 }, { tag: 'formula-swap', value: v * v * r, step: 0 }], hint: L('a = v²/r', 'a = v²/r') };
+  }
+  if (lv === 2) {
+    const m = ri(1, 5), r = pick([0.5, 1, 1.5, 2]), v = ri(2, 8), T = r2(m * (G_ + v * v / r));
+    return { text: L(`ก้อนหินมวล ${ex(`${m} kg`)} ผูกเชือกยาว ${ex(`${r} m`)} แกว่งเป็นวงกลมในแนวดิ่ง ที่จุดต่ำสุดมีอัตราเร็ว ${ex(`${v} m/s`)} แรงตึงเชือกที่จุดต่ำสุดเท่าไร`, `A ${ex(`${m} kg`)} stone on a ${ex(`${r} m`)} string is swung in a vertical circle. At the lowest point its speed is ${ex(`${v} m/s`)}. Tension there?`), note: gNote, answer: T, unit: 'N', unitOpts: ['N', 'm/s²', 'J', 'kg'],
+      steps: [L('ที่จุดต่ำสุด แรงตึงชี้ขึ้น น้ำหนักชี้ลง แรงลัพธ์ชี้เข้าสู่ศูนย์กลาง (ขึ้น)', 'At the bottom tension points up, weight down; the net force points to the centre (up)'), L(`${ex('T − mg = mv² / r')} → ${ex('T = m(g + v²/r)')}`), L(`${ex(`T = ${m}(${G_} + ${v * v}/${r}) ≈ ${fmt(T, 2)} N`)}`)],
+      mistakes: [{ tag: 'vector-direction', value: r2(m * (v * v / r - G_)), step: 1 }, { tag: 'gravity-forgot', value: r2(m * v * v / r), step: 1 }, { tag: 'square-forgot', value: r2(m * (G_ + v / r)), step: 1 }], hint: L('ที่จุดต่ำสุด T − mg = mv²/r', 'At the bottom, T − mg = mv²/r') };
+  }
+  const mu = pick([0.3, 0.4, 0.5, 0.6, 0.8]), r = pick([20, 30, 50, 80, 100, 150]), vm = Math.sqrt(mu * G_ * r), v = r2(vm * 3.6);
+  return { text: L(`ถนนราบมีสัมประสิทธิ์ความเสียดทานสถิต ${ex(`μ = ${mu}`)} รถเลี้ยวโค้งรัศมี ${ex(`${r} m`)} โดยไม่ลื่นไถล อัตราเร็วสูงสุดกี่ km/h`, `On a flat road with static friction ${ex(`μ = ${mu}`)}, what is the maximum speed in km/h for a car to take a ${ex(`${r} m`)} bend without skidding?`), note: gNote, answer: v, unit: 'km/h', unitOpts: ['km/h', 'm/s', 'm/s²', 'N'],
+    steps: [L(`แรงเสียดทานเป็นแรงเข้าสู่ศูนย์กลาง: ${ex('μmg = mv²/r')} → ${ex('v = √(μgr)')}`, `Friction supplies the centripetal force: ${ex('μmg = mv²/r')} → ${ex('v = √(μgr)')}`), L(`${ex(`v = √(${mu} × ${G_} × ${r}) = √${fmt(mu * G_ * r, 2)} ≈ ${fmt(vm, 3)} m/s`)}`), L(`แปลงหน่วย: ${ex(`${fmt(vm, 3)} × 3.6 ≈ ${fmt(v, 2)} km/h`)}`, `Convert: ${ex(`${fmt(vm, 3)} × 3.6 ≈ ${fmt(v, 2)} km/h`)}`)],
+    mistakes: [{ tag: 'unit-convert', value: r2(vm), step: 2 }, { tag: 'sqrt-forgot', value: r2(mu * G_ * r), step: 1 }, { tag: 'formula', value: r2(Math.sqrt(G_ * r) * 3.6), step: 0 }], hint: L('v = √(μgr) แล้วคูณ 3.6 เพื่อเป็น km/h', 'v = √(μgr), then × 3.6 for km/h') };
+}});
+
+def({ id: 'compcirc', subject: 'physics', grades: [3, 6], name: L('วงจรผสมอนุกรม-ขนาน', 'Series-parallel circuits'), gen(lv) {
+  const [R2, R3, Rp] = pick([[6, 3, 2], [12, 6, 4], [4, 12, 3], [20, 5, 4], [30, 15, 10], [6, 6, 3], [10, 10, 5], [12, 4, 3]]), R1 = ri(2, 12), Rt = R1 + Rp, V = pick([12, 18, 24, 36, 48]);
+  const setup = L(`ตัวต้านทาน ${ex(`${R1} Ω`)} ต่ออนุกรมกับกลุ่มตัวต้านทาน ${ex(`${R2} Ω`)} และ ${ex(`${R3} Ω`)} ที่ต่อขนานกัน`, `A ${ex(`${R1} Ω`)} resistor is in series with a parallel pair of ${ex(`${R2} Ω`)} and ${ex(`${R3} Ω`)}`);
+  const sPar = L(`ส่วนขนาน: ${ex(`R_p = ${R2} × ${R3} / (${R2} + ${R3}) = ${Rp} Ω`)}`, `Parallel part: ${ex(`R_p = ${R2} × ${R3} / (${R2} + ${R3}) = ${Rp} Ω`)}`);
+  const sTot = L(`อนุกรมกับ ${R1} Ω: ${ex(`R = ${R1} + ${Rp} = ${Rt} Ω`)}`, `In series with ${R1} Ω: ${ex(`R = ${R1} + ${Rp} = ${Rt} Ω`)}`);
+  const ask = (th, en) => L(`${setup.th} ${th}`, `${setup.en} ${en}`);
+  if (lv === 1) return { text: ask('ความต้านทานรวมของวงจรเท่าไร', 'What is the total resistance?'), answer: Rt, unit: 'Ω', unitOpts: ['Ω', 'A', 'V', 'W'],
+    steps: [sPar, sTot], mistakes: [{ tag: 'series-parallel', value: R1 + R2 + R3, step: 0 }, { tag: 'series-parallel', value: r2(R1 * Rp / (R1 + Rp)), step: 1 }], hint: L('หาส่วนขนานก่อน แล้วค่อยบวกอนุกรม', 'Reduce the parallel part first, then add in series') };
+  const I = r2(V / Rt);
+  if (lv === 2) return { text: ask(`ต่อกับแบตเตอรี่ ${V} V กระแสรวมจากแบตเตอรี่เท่าไร (ทศนิยม 2 ตำแหน่ง)`, `It is connected to a ${V} V battery. Total current from the battery? (2 d.p.)`), answer: I, unit: 'A', unitOpts: ['A', 'V', 'Ω', 'W'],
+    steps: [sPar, sTot, L(`${ex(`I = V/R = ${V}/${Rt} ≈ ${fmt(I, 2)} A`)}`)], mistakes: [{ tag: 'series-parallel', value: r2(V / (R1 + R2 + R3)), step: 1 }, { tag: 'formula', value: r2(V / Rp), step: 2 }], hint: L('I = V / R รวม', 'I = V / R_total') };
+  const Vp = r2(I * Rp);
+  return { text: ask(`ต่อกับแบตเตอรี่ ${V} V แรงดันไฟฟ้าคร่อมกลุ่มขนานเท่าไร (ทศนิยม 2 ตำแหน่ง)`, `It is connected to a ${V} V battery. What is the voltage across the parallel pair? (2 d.p.)`), answer: Vp, unit: 'V', unitOpts: ['V', 'A', 'Ω', 'W'],
+    steps: [sPar, sTot, L(`กระแสรวม ${ex(`I = ${V}/${Rt} = ${fmt(V / Rt, 4)} A`)}`, `Total current ${ex(`I = ${V}/${Rt} = ${fmt(V / Rt, 4)} A`)}`), L(`${ex(`V_p = I × R_p = ${fmt(V / Rt, 4)} × ${Rp} ≈ ${fmt(Vp, 2)} V`)}`)],
+    mistakes: [{ tag: 'var-swap', value: r2(V * R1 / Rt), step: 3 }, { tag: 'formula', value: V, step: 3 }], hint: L('กระแสรวมไหลผ่านกลุ่มขนาน: V = I × R_p', 'The total current flows through the parallel pair: V = I × R_p') };
+}});
+
+def({ id: 'spring', subject: 'physics', grades: [4], name: L('สปริงและพลังงาน', 'Springs & energy'), gen(lv) {
+  const note = L('แปลง cm เป็น m ก่อน ตอบทศนิยม 2 ตำแหน่ง', 'Convert cm to m first; answer to 2 d.p.');
+  const k = ri(2, 20) * 50, x = ri(5, 20), xm = x / 100;
+  if (lv === 1) {
+    const E = r2(0.5 * k * xm * xm);
+    return { text: L(`สปริงค่านิจ ${ex(`${k} N/m`)} ถูกกดให้หดสั้นลง ${ex(`${x} cm`)} เก็บพลังงานศักย์ยืดหยุ่นเท่าไร`, `A spring (${ex(`${k} N/m`)}) is compressed by ${ex(`${x} cm`)}. Elastic energy stored?`), note, answer: E, unit: 'J', unitOpts: ['J', 'N', 'W', 'N/m'],
+      steps: [L(`แปลงหน่วย ${ex(`x = ${x} cm = ${xm} m`)}`, `Convert ${ex(`x = ${x} cm = ${xm} m`)}`), L(`${ex('Eₛ = ½kx²')}`), L(`${ex(`Eₛ = ½ × ${k} × ${xm}² ≈ ${fmt(E, 2)} J`)}`)],
+      mistakes: [{ tag: 'unit-convert', value: r2(0.5 * k * x * x), step: 0 }, { tag: 'half-forgot', value: r2(k * xm * xm), step: 2 }, { tag: 'square-forgot', value: r2(0.5 * k * xm), step: 2 }], hint: L('Eₛ = ½kx² (x เป็นเมตร)', 'Eₛ = ½kx² (x in metres)') };
+  }
+  if (lv === 2) {
+    const m = pick([0.1, 0.2, 0.5, 1, 2]), v = r2(xm * Math.sqrt(k / m));
+    return { text: L(`สปริงค่านิจ ${ex(`${k} N/m`)} ถูกกดสั้นลง ${ex(`${x} cm`)} แล้วดีดก้อนมวล ${ex(`${m} kg`)} บนพื้นลื่น ก้อนมวลหลุดจากสปริงด้วยอัตราเร็วเท่าไร`, `A spring (${ex(`${k} N/m`)}) compressed ${ex(`${x} cm`)} launches a ${ex(`${m} kg`)} block over a smooth floor. Speed as it leaves the spring?`), note, answer: v, unit: 'm/s', unitOpts: ['m/s', 'm/s²', 'J', 'N'],
+      steps: [L(`อนุรักษ์พลังงาน ${ex('½kx² = ½mv²')} → ${ex('v = x√(k/m)')}`, `Energy conservation ${ex('½kx² = ½mv²')} → ${ex('v = x√(k/m)')}`), L(`${ex(`v = ${xm} × √(${k}/${m}) = ${xm} × ${fmt(Math.sqrt(k / m), 3)}`)}`), L(`${ex(`v ≈ ${fmt(v, 2)} m/s`)}`)],
+      mistakes: [{ tag: 'unit-convert', value: r2(x * Math.sqrt(k / m)), step: 1 }, { tag: 'half-forgot', value: r2(xm * Math.sqrt(k / (2 * m))), step: 0 }, { tag: 'formula-swap', value: r2(xm * Math.sqrt(m / k), 3), step: 0 }], hint: L('พลังงานศักย์ของสปริงกลายเป็นพลังงานจลน์', 'Spring potential energy becomes kinetic energy') };
+  }
+  const m = pick([0.5, 1, 2]), mu = pick([0.1, 0.2, 0.3, 0.5]), d = r2(0.5 * k * xm * xm / (mu * m * G_));
+  return { text: L(`สปริงค่านิจ ${ex(`${k} N/m`)} ถูกกดสั้นลง ${ex(`${x} cm`)} ดีดก้อนมวล ${ex(`${m} kg`)} บนพื้นราบที่มี ${ex(`μ = ${mu}`)} ก้อนมวลเคลื่อนที่ไกลจากจุดปล่อยกี่เมตรจึงหยุด (สมมติสปริงปล่อยก้อนมวลที่ตำแหน่งสมดุล)`, `A spring (${ex(`${k} N/m`)}) compressed ${ex(`${x} cm`)} launches a ${ex(`${m} kg`)} block along a floor with ${ex(`μ = ${mu}`)}. How far from the release point does it travel before stopping? (Assume it leaves the spring at its natural length.)`), note: L(`ใช้ g = ${G_} m/s² ตอบทศนิยม 2 ตำแหน่ง`, `Use g = ${G_} m/s²; 2 d.p.`), answer: d, unit: 'm', unitOpts: ['m', 'm/s', 'J', 'N'],
+    steps: [L(`พลังงานที่เก็บ ${ex(`½kx² = ½ × ${k} × ${xm}² = ${fmt(0.5 * k * xm * xm, 3)} J`)}`, `Stored energy ${ex(`½kx² = ½ × ${k} × ${xm}² = ${fmt(0.5 * k * xm * xm, 3)} J`)}`), L(`งานของแรงเสียดทาน ${ex('μmg · d')} ต้องเท่ากับพลังงานนี้`, `Friction work ${ex('μmg · d')} must equal that energy`), L(`${ex(`d = ${fmt(0.5 * k * xm * xm, 3)} / (${mu} × ${m} × ${G_}) ≈ ${fmt(d, 2)} m`)}`)],
+    mistakes: [{ tag: 'half-forgot', value: r2(k * xm * xm / (mu * m * G_)), step: 0 }, { tag: 'gravity-forgot', value: r2(0.5 * k * xm * xm / (mu * m)), step: 2 }, { tag: 'unit-convert', value: r2(0.5 * k * x * x / (mu * m * G_)), step: 0 }], hint: L('พลังงานสปริง = งานของแรงเสียดทาน (μmg × ระยะทาง)', 'Spring energy = friction work (μmg × distance)') };
+}});
+
+def({ id: 'gas', subject: 'physics', grades: [5], name: L('กฎของแก๊ส', 'Gas laws'), gen(lv) {
+  const note = L('ใช้ K = °C + 273 ตอบทศนิยม 2 ตำแหน่ง', 'Use K = °C + 273; answer to 2 d.p.');
+  if (lv === 1) {
+    const P1 = ri(1, 5), V1 = ri(4, 12), V2 = nz(1, 12, [V1]), P2 = r2(P1 * V1 / V2);
+    return { text: L(`แก๊สความดัน ${ex(`${P1} atm`)} ปริมาตร ${ex(`${V1} L`)} ถูกอัด/ขยายที่อุณหภูมิคงที่จนปริมาตรเป็น ${ex(`${V2} L`)} ความดันใหม่เท่าไร`, `A gas at ${ex(`${P1} atm`)} and ${ex(`${V1} L`)} is compressed/expanded at constant temperature to ${ex(`${V2} L`)}. New pressure?`), note, answer: P2, unit: 'atm', unitOpts: ['atm', 'L', 'K', 'mol'],
+      steps: [L(`อุณหภูมิคงที่ (บอยล์): ${ex('P₁V₁ = P₂V₂')}`, `Constant temperature (Boyle): ${ex('P₁V₁ = P₂V₂')}`), L(`${ex(`P₂ = ${P1} × ${V1} / ${V2}`)}`), L(`${ex(`P₂ ≈ ${fmt(P2, 2)} atm`)}`)],
+      mistakes: [{ tag: 'gas-ratio', value: r2(P1 * V2 / V1), step: 1 }, { tag: 'formula', value: P1 * V1, step: 1 }], hint: L('ปริมาตรลด → ความดันเพิ่ม', 'Smaller volume → higher pressure') };
+  }
+  if (lv === 2) {
+    const V1 = ri(2, 12), T1 = ri(5, 30), T2 = ri(40, 150), V2 = r2(V1 * (T2 + 273) / (T1 + 273));
+    return { text: L(`แก๊สปริมาตร ${ex(`${V1} L`)} ที่ ${ex(`${T1} °C`)} ถูกให้ความร้อนที่ความดันคงที่จนถึง ${ex(`${T2} °C`)} ปริมาตรใหม่เท่าไร`, `A gas of ${ex(`${V1} L`)} at ${ex(`${T1} °C`)} is heated at constant pressure to ${ex(`${T2} °C`)}. New volume?`), note, answer: V2, unit: 'L', unitOpts: ['L', 'atm', 'K', 'mol'],
+      steps: [L(`แปลงเป็นเคลวิน ${ex(`T₁ = ${T1 + 273} K`)}, ${ex(`T₂ = ${T2 + 273} K`)}`, `To kelvin ${ex(`T₁ = ${T1 + 273} K`)}, ${ex(`T₂ = ${T2 + 273} K`)}`), L(`ความดันคงที่ (ชาร์ล): ${ex('V₁/T₁ = V₂/T₂')}`, `Constant pressure (Charles): ${ex('V₁/T₁ = V₂/T₂')}`), L(`${ex(`V₂ = ${V1} × ${T2 + 273}/${T1 + 273} ≈ ${fmt(V2, 2)} L`)}`)],
+      mistakes: [{ tag: 'kelvin', value: r2(V1 * T2 / T1), step: 0 }, { tag: 'gas-ratio', value: r2(V1 * (T1 + 273) / (T2 + 273)), step: 2 }], hint: L('อุณหภูมิต้องเป็นเคลวินเสมอ', 'Temperatures must be in kelvin') };
+  }
+  const P1 = ri(1, 3), V1 = ri(4, 12), T1 = ri(15, 30), P2 = nz(1, 6, [P1]), T2 = ri(40, 100), V2 = r2(P1 * V1 * (T2 + 273) / ((T1 + 273) * P2));
+  return { text: L(`แก๊สมี ${ex(`P₁ = ${P1} atm`)}, ${ex(`V₁ = ${V1} L`)}, ${ex(`T₁ = ${T1} °C`)} เปลี่ยนสภาวะเป็น ${ex(`P₂ = ${P2} atm`)}, ${ex(`T₂ = ${T2} °C`)} ปริมาตรใหม่เท่าไร`, `A gas starts at ${ex(`P₁ = ${P1} atm`)}, ${ex(`V₁ = ${V1} L`)}, ${ex(`T₁ = ${T1} °C`)} and changes to ${ex(`P₂ = ${P2} atm`)}, ${ex(`T₂ = ${T2} °C`)}. New volume?`), note, answer: V2, unit: 'L', unitOpts: ['L', 'atm', 'K', 'mol'],
+    steps: [L(`แปลงเป็นเคลวิน ${ex(`T₁ = ${T1 + 273} K`)}, ${ex(`T₂ = ${T2 + 273} K`)}`, `To kelvin ${ex(`T₁ = ${T1 + 273} K`)}, ${ex(`T₂ = ${T2 + 273} K`)}`), L(`กฎแก๊สรวม ${ex('P₁V₁/T₁ = P₂V₂/T₂')} → ${ex('V₂ = P₁V₁T₂ / (T₁P₂)')}`, `Combined gas law ${ex('P₁V₁/T₁ = P₂V₂/T₂')} → ${ex('V₂ = P₁V₁T₂ / (T₁P₂)')}`), L(`${ex(`V₂ = ${P1 * V1} × ${T2 + 273} / (${T1 + 273} × ${P2}) ≈ ${fmt(V2, 2)} L`)}`)],
+    mistakes: [{ tag: 'kelvin', value: r2(P1 * V1 * T2 / (T1 * P2)), step: 0 }, { tag: 'gas-ratio', value: r2(P2 * V1 * (T2 + 273) / (P1 * (T1 + 273))), step: 1 }, { tag: 'formula', value: r2(P1 * V1 / P2), step: 1 }], hint: L('แปลงเป็นเคลวินก่อน แล้วใช้ P₁V₁/T₁ = P₂V₂/T₂', 'Convert to kelvin, then use P₁V₁/T₁ = P₂V₂/T₂') };
+}});
+
+/* ---------- checking ---------- */
+function tolOf(p, v = p.answer) { return p.tol ?? Math.max(0.006, Math.abs(v) * 0.005); }
+function build(g, lv) {
+  const p = g.gen(lv);
+  p.topicId = g.id; p.level = lv; p.subject = g.subject;
+  const tol = tolOf(p);
+  const seen = [];
+  p.mistakes = (p.mistakes || []).filter(m => {
+    if (!isFinite(m.value) || Math.abs(m.value - p.answer) <= tol * 1.5) return false;
+    if (seen.some(s => Math.abs(s - m.value) <= tolOf(p, m.value))) return false;
+    seen.push(m.value); return true;
+  });
+  return p;
+}
+function parseNum(s) {
+  s = String(s).trim().replace(/[−–]/g, '-').replace(/,/g, '').replace(/\s+/g, '');
+  if (!s) return NaN;
+  const m = s.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
+  if (m) { const d = +m[2]; return d === 0 ? NaN : +m[1] / d; }
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s)) return NaN;
+  return +s;
+}
+function diagnose(p, v) {
+  if (Math.abs(v - p.answer) <= tolOf(p)) return { correct: true };
+  let best = null, bestErr = Infinity;
+  for (const m of p.mistakes) {
+    const e = Math.abs(v - m.value);
+    if (e <= tolOf(p, m.value) && e < bestErr) { best = m; bestErr = e; }
+  }
+  if (best) return { correct: false, mistake: best };
+  if (p.answer !== 0 && Math.abs(v + p.answer) <= tolOf(p)) return { correct: false, mistake: { tag: 'sign', step: p.steps.length - 1 } };
+  if (p.answer !== 0) for (const k of [-3, -2, -1, 1, 2, 3]) if (Math.abs(v - p.answer * 10 ** k) <= tolOf(p, p.answer * 10 ** k)) return { correct: false, mistake: { tag: 'magnitude', step: 0 } };
+  return { correct: false };
+}
+window.__selfTest = (n = 40) => {
+  const bad = [];
+  for (const g of GENERATORS) for (const lv of [1, 2, 3]) for (let i = 0; i < n; i++) {
+    let p; try { p = build(g, lv); } catch (e) { bad.push({ id: g.id, lv, err: e.message }); continue; }
+    const errs = [];
+    if (!isFinite(p.answer)) errs.push('answer not finite');
+    if (!p.steps?.length) errs.push('no steps');
+    if (!p.text?.th || !p.text?.en) errs.push('text');
+    if (!diagnose(p, p.answer).correct) errs.push('answer fails check');
+    if (p.unit && !p.unitOpts.includes(p.unit)) errs.push('unit not in options');
+    for (const m of p.mistakes) { if (!MISTAKES[m.tag]) errs.push('unknown tag ' + m.tag); if (m.step >= p.steps.length) errs.push('step idx ' + m.tag); }
+    if (errs.length) bad.push({ id: g.id, lv, errs });
+  }
+  console.log(bad.length ? bad : 'all generators OK');
+  return bad;
+};
+// @gen-end
+
+/* ---------- i18n ---------- */
+const STR = {
+  th: {
+    tagline: 'สุ่มโจทย์ ม.1–ม.6 · วินิจฉัยจุดผิด · ปรับตามจุดอ่อน', settings: 'ตั้งค่าโจทย์', subject: 'วิชา', math: 'คณิตศาสตร์', physics: 'ฟิสิกส์', grade: 'ระดับชั้น', gradeP: 'ม.',
+    difficulty: 'ความยาก', auto: 'อัตโนมัติ', easy: 'ง่าย', medium: 'กลาง', hard: 'ยาก', autoHelp: 'อัตโนมัติ: ถูก 3 ข้อติดเลื่อนระดับขึ้น ผิด 2 ข้อติดลดระดับ แยกตามหัวข้อ',
+    topics: 'หัวข้อ', selectAll: 'เลือกทั้งหมด', clearAll: 'ล้าง', weakMode: 'โหมดฝึกจุดอ่อน', weakHelp: 'สุ่มเฉพาะ 3 หัวข้อที่แม่นยำต่ำสุด',
+    yourAnswer: 'คำตอบของคุณ', unit: 'หน่วย', chooseUnit: 'เลือกหน่วย', submit: 'ส่งคำตอบ', inputHelp: 'พิมพ์ตัวเลข ทศนิยม หรือเศษส่วน เช่น -2.5, 3/4',
+    hint: 'คำใบ้', showSolution: 'ดูเฉลย', next: 'ข้อถัดไป', solution: 'เฉลยทีละขั้น', nextStep: 'ขั้นถัดไป', showAll: 'แสดงทั้งหมด',
+    insights: 'สถิติและจุดอ่อน', byTopic: 'ความแม่นยำรายหัวข้อ', commonMistakes: 'ข้อผิดพลาดที่พบบ่อย', practiceWeak: 'ฝึกจุดอ่อน', reset: 'รีเซ็ตสถิติ',
+    attempts: 'ทำแล้ว', accuracy: 'แม่นยำ', streak: 'ถูกติดกัน', best: 'สูงสุด', items: 'ข้อ', level: 'ระดับ',
+    noStats: 'ยังไม่มีข้อมูล — ลองทำโจทย์สักสองสามข้อ แล้วสถิติจะแสดงที่นี่', noMistakes: 'ยังไม่พบรูปแบบข้อผิดพลาด เยี่ยมมาก!',
+    correctT: 'ถูกต้อง!', correctB: 'คำตอบคือ', wrongT: 'ยังไม่ถูก', foundMistake: 'ดูเหมือนว่า', checkStep: 'ลองตรวจขั้นที่', unknownWrong: 'คำตอบคลาดเคลื่อน ไม่ตรงกับรูปแบบความผิดพลาดที่รู้จัก ลองทบทวนทีละขั้น หรือกดดูเฉลย',
+    retry: 'ลองแก้คำตอบได้อีก (ไม่นับคะแนนซ้ำ)', unitWrongT: 'ตัวเลขถูก แต่หน่วยผิด', unitAlso: 'และหน่วยที่เลือกยังไม่ถูกต้อง', hintT: 'คำใบ้',
+    errEmpty: 'กรุณาพิมพ์คำตอบ', errNum: 'อ่านค่าไม่ได้ — ใช้ตัวเลข ทศนิยม หรือเศษส่วน เช่น 3/4', errUnit: 'กรุณาเลือกหน่วย',
+    flagNote: 'จุดที่น่าจะพลาด', answerIs: 'คำตอบ', viewedNote: 'ดูเฉลยก่อนตอบ — ข้อนี้นับเป็นยังไม่ผ่าน', noTopics: 'ยังไม่ได้เลือกหัวข้อ — เลือกวิชา ระดับชั้น และหัวข้ออย่างน้อย 1 หัวข้อ',
+    lvUp: 'เก่งมาก! เลื่อนระดับ', lvDown: 'ปรับระดับลงเพื่อทบทวนพื้นฐาน', weakNone: 'ยังไม่มีสถิติพอสำหรับโหมดฝึกจุดอ่อน', weakOn: 'เปิดโหมดฝึกจุดอ่อน', resetQ: 'ลบสถิติทั้งหมดใช่หรือไม่?', resetDone: 'รีเซ็ตสถิติแล้ว',
+    rWeak: 'โหมดฝึกจุดอ่อน · ความแม่นยำล่าสุด', rLow: 'เลือกให้บ่อยขึ้นเพราะความแม่นยำล่าสุด', rNew: 'หัวข้อใหม่ — ยังไม่เคยฝึก', rMix: 'สุ่มทบทวน · ความแม่นยำล่าสุด', rFixed: 'ระดับที่เลือกเอง',
+    toLight: 'เปลี่ยนเป็นโหมดสว่าง', toDark: 'เปลี่ยนเป็นโหมดมืด', langAria: 'Switch to English',
+    attachPhoto: 'แนบรูปวิธีทำ', removePhoto: 'ลบรูป', photoHelp: 'ไม่บังคับ — ส่งรูปอย่างเดียวได้ แล้วเทียบกับเฉลยเอง (รูปไม่ถูกอัปโหลด อยู่ในเบราว์เซอร์เท่านั้น)', photoErrType: 'ไฟล์ต้องเป็นรูปภาพ', photoErrRead: 'อ่านรูปไม่สำเร็จ ลองรูปอื่น',
+    yourWork: 'วิธีทำของคุณ', photoSentT: 'ส่งรูปวิธีทำแล้ว', photoSentB: 'เปรียบเทียบกับเฉลยด้านล่างทีละขั้น แล้วประเมินตัวเอง', selfRight: 'ทำถูก', selfWrong: 'ยังไม่ถูก', selfOkT: 'ประเมินตนเอง: ถูก', selfBadT: 'ประเมินตนเอง: ยังไม่ถูก — ทบทวนจากเฉลย',
+    footer: 'สถิติถูกเก็บในเบราว์เซอร์ของคุณเท่านั้น · คีย์ลัด: Enter ส่ง · H คำใบ้ · N ข้อถัดไป',
+  },
+  en: {
+    tagline: 'Grade 7–12 problems · error diagnosis · adapts to your weak spots', settings: 'Problem settings', subject: 'Subject', math: 'Math', physics: 'Physics', grade: 'Grade (M.)', gradeP: 'M',
+    difficulty: 'Difficulty', auto: 'Adaptive', easy: 'Easy', medium: 'Medium', hard: 'Hard', autoHelp: 'Adaptive: 3 right in a row levels up, 2 wrong in a row levels down — per topic.',
+    topics: 'Topics', selectAll: 'Select all', clearAll: 'Clear', weakMode: 'Weak-spot practice', weakHelp: 'Draw only from your 3 least accurate topics',
+    yourAnswer: 'Your answer', unit: 'Unit', chooseUnit: 'Unit', submit: 'Submit', inputHelp: 'Type a number, decimal or fraction, e.g. -2.5, 3/4',
+    hint: 'Hint', showSolution: 'Solution', next: 'Next', solution: 'Step-by-step solution', nextStep: 'Next step', showAll: 'Show all',
+    insights: 'Progress & weak spots', byTopic: 'Accuracy by topic', commonMistakes: 'Most frequent mistakes', practiceWeak: 'Practise weak spots', reset: 'Reset stats',
+    attempts: 'Attempted', accuracy: 'Accuracy', streak: 'Streak', best: 'best', items: 'items', level: 'Level',
+    noStats: 'No data yet — solve a few problems and your stats will appear here.', noMistakes: 'No mistake patterns detected yet. Nice!',
+    correctT: 'Correct!', correctB: 'The answer is', wrongT: 'Not quite', foundMistake: 'It looks like you', checkStep: 'Check step', unknownWrong: 'Your answer doesn’t match a known mistake pattern. Re-check each step or open the solution.',
+    retry: 'You can try again (it won’t be scored twice).', unitWrongT: 'Right number, wrong unit', unitAlso: 'and the selected unit is also wrong', hintT: 'Hint',
+    errEmpty: 'Please enter an answer', errNum: 'Couldn’t read that — use a number, decimal or fraction like 3/4', errUnit: 'Please choose a unit',
+    flagNote: 'Likely slip here', answerIs: 'Answer', viewedNote: 'Solution viewed before answering — counted as not passed', noTopics: 'No topics selected — choose a subject, grade and at least one topic.',
+    lvUp: 'Great work! Level up', lvDown: 'Level lowered to rebuild the basics', weakNone: 'Not enough data for weak-spot practice yet', weakOn: 'Weak-spot practice on', resetQ: 'Delete all statistics?', resetDone: 'Statistics reset',
+    rWeak: 'Weak-spot practice · recent accuracy', rLow: 'Picked more often — recent accuracy', rNew: 'New topic — not practised yet', rMix: 'Mixed review · recent accuracy', rFixed: 'Fixed difficulty',
+    toLight: 'Switch to light mode', toDark: 'Switch to dark mode', langAria: 'เปลี่ยนเป็นภาษาไทย',
+    attachPhoto: 'Attach working', removePhoto: 'Remove photo', photoHelp: 'Optional — you can submit a photo alone and compare with the solution yourself (photos never leave your browser)', photoErrType: 'File must be an image', photoErrRead: 'Couldn’t read that image — try another',
+    yourWork: 'Your working', photoSentT: 'Working submitted', photoSentB: 'Compare it with the solution below, step by step, then rate yourself.', selfRight: 'I got it right', selfWrong: 'Not quite', selfOkT: 'Self-check: correct', selfBadT: 'Self-check: not yet — review the solution',
+    footer: 'Stats are stored only in your browser · Shortcuts: Enter submit · H hint · N next',
+  },
+};
+const LV = { 1: 'easy', 2: 'medium', 3: 'hard' };
+
+/* ---------- storage ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const blankStats = () => ({ topics: {}, mistakes: {}, total: 0, correct: 0, streak: 0, best: 0 });
+const state = {
+  lang: store.get('smpg-lang', 'th'),
+  settings: Object.assign({ subjects: { math: true, physics: true }, grades: [1, 2, 3, 4, 5, 6], diff: 'auto', off: [], weak: false }, store.get('smpg-settings', {})),
+  stats: Object.assign(blankStats(), store.get('smpg-stats', {})),
+  photo: null, selfReview: false,
+  p: null, reason: null, attempted: false, solved: false, viewed: false, revealed: 0, flagStep: null, lastTopic: null, fb: [],
+};
+const saveSettings = () => store.set('smpg-settings', state.settings);
+const saveStats = () => store.set('smpg-stats', state.stats);
+const t = k => STR[state.lang][k] ?? k;
+const tr = o => (o ? o[state.lang] ?? o.th : '');
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- topic selection & adaptivity ---------- */
+const visibleTopics = () => GENERATORS.filter(g => state.settings.subjects[g.subject] && g.grades.some(gr => state.settings.grades.includes(gr)));
+const enabledTopics = () => visibleTopics().filter(g => !state.settings.off.includes(g.id));
+const tStat = id => state.stats.topics[id];
+const recentAcc = s => (s && s.recent.length ? s.recent.reduce((a, b) => a + b, 0) / s.recent.length : null);
+const pctStr = x => Math.round(x * 100) + '%';
+
+function chooseTopic() {
+  let pool = enabledTopics();
+  if (!pool.length) return null;
+  let weak = false;
+  if (state.settings.weak) {
+    const tried = pool.filter(g => tStat(g.id)?.a > 0).sort((a, b) => recentAcc(tStat(a.id)) - recentAcc(tStat(b.id)));
+    if (tried.length) { pool = tried.slice(0, 3); weak = true; }
+  }
+  const w = pool.map(g => {
+    const s = tStat(g.id), acc = recentAcc(s);
+    let x = acc === null ? 2.5 : 1 + 3 * (1 - acc);
+    if (s) x += Math.min(2, (s.mk || 0) / 4);
+    if (g.id === state.lastTopic && pool.length > 1) x *= 0.25;
+    return x;
+  });
+  let r = Math.random() * w.reduce((a, b) => a + b, 0), i = 0;
+  while (r > w[i] && i < w.length - 1) r -= w[i++];
+  const g = pool[i], s = tStat(g.id), acc = recentAcc(s);
+  let reason;
+  if (weak) reason = ['rWeak', acc];
+  else if (!s || !s.a) reason = ['rNew', null];
+  else if (s.a >= 3 && acc < 0.6) reason = ['rLow', acc];
+  else reason = ['rMix', acc];
+  return { g, reason };
+}
+const levelFor = g => (state.settings.diff === 'auto' ? tStat(g.id)?.lvl || 1 : { easy: 1, medium: 2, hard: 3 }[state.settings.diff]);
+
+function record(correct, tags) {
+  const p = state.p, S = state.stats;
+  const s = S.topics[p.topicId] ||= { a: 0, c: 0, recent: [], lvl: 1, sc: 0, sw: 0, mk: 0 };
+  s.a++; S.total++;
+  if (correct) { s.c++; S.correct++; S.streak++; S.best = Math.max(S.best, S.streak); } else S.streak = 0;
+  s.recent.push(correct ? 1 : 0); if (s.recent.length > 10) s.recent.shift();
+  for (const tag of tags) { S.mistakes[tag] = (S.mistakes[tag] || 0) + 1; s.mk++; }
+  let change = 0;
+  if (state.settings.diff === 'auto') {
+    if (correct) { s.sc++; s.sw = 0; if (s.sc >= 3 && s.lvl < 3) { s.lvl++; s.sc = 0; change = 1; } }
+    else { s.sw++; s.sc = 0; if (s.sw >= 2 && s.lvl > 1) { s.lvl--; s.sw = 0; change = -1; } }
+  }
+  saveStats(); renderInsights();
+  if (change) toast(`${change > 0 ? t('lvUp') : t('lvDown')}: ${tr(GENERATORS.find(g => g.id === p.topicId).name)} → ${t(LV[s.lvl])}`);
+}
+
+/* ---------- rendering ---------- */
+function icon(id) { return `<svg class="i" aria-hidden="true"><use href="#${id}"/></svg>`; }
+function applyI18n() {
+  document.documentElement.lang = state.lang;
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $('langLbl').textContent = state.lang === 'th' ? 'EN' : 'TH';
+  $('langBtn').setAttribute('aria-label', t('langAria'));
+  updateThemeBtn();
+}
+function renderSettings() {
+  const S = state.settings;
+  $('subjects').innerHTML = ['math', 'physics'].map(k => `<button type="button" class="chip" data-subj="${k}" aria-pressed="${!!S.subjects[k]}">${t(k)}</button>`).join('');
+  $('grades').innerHTML = [1, 2, 3, 4, 5, 6].map(g => `<button type="button" class="chip grade" data-grade="${g}" aria-pressed="${S.grades.includes(g)}">${t('gradeP')}${g}</button>`).join('');
+  $('diffSeg').innerHTML = ['auto', 'easy', 'medium', 'hard'].map(k => `<input type="radio" name="diff" id="d-${k}" value="${k}" ${S.diff === k ? 'checked' : ''}><label for="d-${k}">${t(k)}</label>`).join('');
+  const vis = visibleTopics();
+  $('topicList').innerHTML = vis.length ? vis.map(g => `<label class="topic-item"><input type="checkbox" data-topic="${g.id}" ${S.off.includes(g.id) ? '' : 'checked'}><span class="dot ${g.subject}" aria-hidden="true"></span><span>${tr(g.name)}</span><span class="tg">${t('gradeP')}${g.grades.join(',')}</span></label>`).join('') : `<p class="empty">${t('noTopics')}</p>`;
+  $('weakToggle').checked = S.weak;
+}
+function renderProblem() {
+  const p = state.p;
+  const meta = $('meta'), q = $('qText');
+  const form = $('answerForm');
+  if (!p) {
+    meta.innerHTML = ''; $('reason').innerHTML = ''; q.innerHTML = `<p class="empty" style="margin:0">${t('noTopics')}</p>`; $('qNote').textContent = ''; $('diagram').innerHTML = '';
+    form.hidden = true; ['hintBtn', 'solBtn', 'nextBtn'].forEach(id => $(id).disabled = id !== 'nextBtn'); return;
+  }
+  form.hidden = false; ['hintBtn', 'solBtn', 'nextBtn'].forEach(id => $(id).disabled = false);
+  const g = GENERATORS.find(x => x.id === p.topicId);
+  const auto = state.settings.diff === 'auto';
+  meta.innerHTML = `<span class="badge ${p.subject}">${t(p.subject)}</span><span class="badge">${tr(g.name)}</span><span class="badge lv${p.level}">${t('level')}: ${t(LV[p.level])}${auto ? ' · ' + t('auto') : ''}</span>`;
+  const [rk, acc] = state.reason;
+  $('reason').innerHTML = `${icon('ic-spark')}<span>${auto || state.settings.weak ? t(rk) + (acc !== null ? ' ' + pctStr(acc) : '') : t('rFixed')}</span>`;
+  q.innerHTML = tr(p.text);
+  $('qNote').textContent = tr(p.note);
+  $('qNote').hidden = !p.note;
+  $('diagram').innerHTML = p.diagram || '';
+  const sel = $('unitSelect');
+  if (p.unit) {
+    sel.hidden = false;
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">${t('chooseUnit')}</option>` + p.unitShuffled.map(u => `<option ${u === cur ? 'selected' : ''}>${u}</option>`).join('');
+  } else sel.hidden = true;
+  $('suffix').textContent = tr(p.suffix);
+  $('submitBtn').disabled = state.solved || state.viewed || state.selfReview;
+  $('nextBtn').classList.toggle('pulse', state.solved || state.viewed);
+}
+function fbBox(kind, ic, title, body) { return `<div class="fb ${kind}">${icon(ic)}<div class="body"><h3>${title}</h3>${body ? `<p>${body}</p>` : ''}</div></div>`; }
+function answerDisplay(p) { return (p.answerText ?? fmt(p.answer)) + (p.unit ? ' ' + p.unit : p.suffix ? ' ' + tr(p.suffix) : ''); }
+const workImg = cls => `<img class="${cls}" src="${state.photo}" alt="${esc(t('yourWork'))}">`;
+function renderPhoto() {
+  const th = $('photoThumb');
+  th.hidden = !state.photo;
+  th.innerHTML = state.photo ? workImg('photo-thumb') : '';
+  $('photoRemoveBtn').hidden = !state.photo;
+  $('photoBtn').querySelector('span').textContent = t('attachPhoto');
+}
+function renderFeedback() {
+  $('feedback').innerHTML = state.fb.map(f => {
+    if (f.type === 'photo') return `<div class="fb info">${icon('ic-camera')}<div class="body"><h3>${t('photoSentT')}</h3><p>${t('photoSentB')}</p>${workImg('work-photo')}<div class="self-grade"><button type="button" class="btn btn-primary" data-self="1">${t('selfRight')}</button><button type="button" class="btn" data-self="0">${t('selfWrong')}</button></div></div></div>`;
+    if (f.type === 'self') return fbBox(f.ok ? 'ok' : 'warn', f.ok ? 'ic-check' : 'ic-alert', t(f.ok ? 'selfOkT' : 'selfBadT'), f.ok ? `${t('correctB')} ${ex(answerDisplay(state.p))}` : '');
+    if (f.type === 'ok') return fbBox('ok', 'ic-check', t('correctT'), `${t('correctB')} ${ex(answerDisplay(state.p))}`);
+    if (f.type === 'hint') return fbBox('info', 'ic-bulb', t('hintT'), tr(state.p.hint));
+    if (f.type === 'viewed') return fbBox('warn', 'ic-alert', t('viewedNote'), '');
+    if (f.type === 'unit') return fbBox('warn', 'ic-alert', t('unitWrongT'), `${tr(MISTAKES['unit-error'].tip)} — ${t('answerIs')}: ${ex(answerDisplay(state.p))}`);
+    // wrong
+    let body = '';
+    if (f.tag) {
+      const M = MISTAKES[f.tag];
+      body = `${t('foundMistake')}<b>${state.lang === 'th' ? '' : ' '}${tr(M.label).toLowerCase ? (state.lang === 'en' ? tr(M.label).charAt(0).toLowerCase() + tr(M.label).slice(1) : tr(M.label)) : ''}</b> — ${tr(M.tip)}.`;
+      if (f.step != null) body += ` ${t('checkStep')} ${f.step + 1}.`;
+    } else body = t('unknownWrong');
+    if (f.unitAlso) body += ` (${t('unitAlso')})`;
+    if (!state.solved) body += `<br>${t('retry')}`;
+    return fbBox('err', 'ic-x', `${t('wrongT')} ${f.value ? '(' + esc(f.value) + ')' : ''}`, body);
+  }).join('');
+}
+function renderSolution() {
+  const p = state.p, sec = $('solution');
+  if (!p || state.revealed === 0) { sec.hidden = true; return; }
+  sec.hidden = false;
+  $('solPhoto').innerHTML = state.photo && !state.fb.some(f => f.type === 'photo') ? `<p class="hint-text" style="margin:0">${t('yourWork')}</p>${workImg('work-photo')}` : '';
+  const total = p.steps.length + 1;
+  const items = p.steps.map((s, i) => `<li class="${i === state.flagStep ? 'flag' : ''}">${tr(s)}${i === state.flagStep ? `<span class="flag-note">${t('flagNote')}</span>` : ''}</li>`);
+  items.push(`<li class="final"><b>${t('answerIs')}:</b> ${ex(answerDisplay(p))}</li>`);
+  $('steps').innerHTML = items.slice(0, state.revealed).join('');
+  $('stepCount').textContent = `${Math.min(state.revealed, total)} / ${total}`;
+  $('stepBtn').hidden = $('allStepsBtn').hidden = state.revealed >= total;
+}
+function renderInsights() {
+  const S = state.stats, acc = S.total ? S.correct / S.total : 0;
+  $('tiles').innerHTML = `<div class="tile"><b>${S.total}</b><span>${t('attempts')}</span></div><div class="tile"><b>${S.total ? pctStr(acc) : '—'}</b><span>${t('accuracy')}</span></div><div class="tile"><b>${S.streak}</b><span>${t('streak')} · ${t('best')} ${S.best}</span></div>`;
+  const rows = GENERATORS.filter(g => tStat(g.id)?.a).map(g => ({ g, s: tStat(g.id), acc: recentAcc(tStat(g.id)) })).sort((a, b) => a.acc - b.acc);
+  $('bars').innerHTML = rows.length ? `<ul class="bars">${rows.map(({ g, s, acc }) => {
+    const cls = acc < 0.5 ? 'lo' : acc < 0.75 ? 'mid' : 'hi';
+    return `<li><span class="nm"><span class="dot ${g.subject}" aria-hidden="true"></span>${tr(g.name)}</span><span class="pct">${pctStr(acc)}</span><span class="track" role="img" aria-label="${pctStr(acc)}"><span class="fill ${cls}" style="width:${Math.max(3, acc * 100)}%;display:block"></span></span><span class="sub">${s.c}/${s.a} ${t('items')} · ${t('level')} ${t(LV[s.lvl])}</span></li>`;
+  }).join('')}</ul>` : `<p class="empty">${t('noStats')}</p>`;
+  const mk = Object.entries(S.mistakes).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  $('mistakes').innerHTML = mk.length ? `<ul class="mk-list">${mk.map(([tag, n]) => `<li><div class="row"><b>${tr(MISTAKES[tag]?.label) || tag}</b><span class="n">×${n}</span></div><p>${tr(MISTAKES[tag]?.tip)}</p></li>`).join('')}</ul>` : `<p class="empty">${S.total ? t('noMistakes') : t('noStats')}</p>`;
+}
+function renderAll() { applyI18n(); renderSettings(); renderPhoto(); renderProblem(); renderFeedback(); renderSolution(); renderInsights(); }
+
+/* ---------- actions ---------- */
+function newProblem() {
+  const pick_ = chooseTopic();
+  state.attempted = state.solved = state.viewed = state.selfReview = false; state.revealed = 0; state.flagStep = null; state.fb = [];
+  state.photo = null; $('photoInput').value = ''; renderPhoto();
+  $('answerInput').value = ''; $('answerErr').textContent = ''; $('answerInput').removeAttribute('aria-invalid'); $('unitSelect').value = '';
+  if (!pick_) { state.p = null; renderProblem(); renderFeedback(); renderSolution(); return; }
+  state.reason = pick_.reason;
+  state.p = build(pick_.g, levelFor(pick_.g));
+  if (state.p.unit) state.p.unitShuffled = [...state.p.unitOpts].sort(() => Math.random() - 0.5);
+  state.lastTopic = pick_.g.id;
+  renderProblem(); renderFeedback(); renderSolution();
+}
+function submit(e) {
+  e.preventDefault();
+  const p = state.p; if (!p || state.solved || state.viewed || state.selfReview) return;
+  const raw = $('answerInput').value, v = parseNum(raw), err = $('answerErr');
+  if (!raw.trim() && state.photo) {
+    // photo only: no number to diagnose, so show the full solution and let the student self-grade
+    err.textContent = ''; $('answerInput').removeAttribute('aria-invalid');
+    state.attempted = state.selfReview = true;
+    state.fb = state.fb.filter(f => f.type === 'hint'); state.fb.push({ type: 'photo' });
+    state.revealed = p.steps.length + 1;
+    renderProblem(); renderFeedback(); renderSolution();
+    return;
+  }
+  if (!raw.trim()) { err.textContent = t('errEmpty'); $('answerInput').setAttribute('aria-invalid', 'true'); $('answerInput').focus(); return; }
+  if (!isFinite(v)) { err.textContent = t('errNum'); $('answerInput').setAttribute('aria-invalid', 'true'); $('answerInput').focus(); return; }
+  const unit = $('unitSelect').value;
+  if (p.unit && !unit) { err.textContent = t('errUnit'); $('unitSelect').focus(); return; }
+  err.textContent = ''; $('answerInput').removeAttribute('aria-invalid');
+  const d = diagnose(p, v), unitOk = !p.unit || unit === p.unit;
+  const first = !state.attempted; state.attempted = true;
+  state.fb = state.fb.filter(f => f.type === 'hint');
+  if (d.correct && unitOk) {
+    state.solved = true; state.fb.push({ type: 'ok' });
+    if (first) record(true, []);
+  } else if (d.correct) {
+    state.fb.push({ type: 'unit' });
+    if (first) record(false, ['unit-error']);
+  } else {
+    state.fb.push({ type: 'err', tag: d.mistake?.tag, step: d.mistake?.step, value: raw.trim() + (p.unit && unit ? ' ' + unit : ''), unitAlso: !unitOk });
+    state.flagStep = d.mistake?.step ?? null;
+    if (first) record(false, [d.mistake?.tag, !unitOk && 'unit-error'].filter(Boolean));
+  }
+  renderProblem(); renderFeedback(); renderSolution();
+  if (state.solved) $('nextBtn').focus();
+}
+function selfGrade(ok) {
+  if (!state.selfReview) return;
+  state.selfReview = false;
+  if (ok) state.solved = true; else state.viewed = true;
+  state.fb = state.fb.filter(f => f.type === 'hint'); state.fb.push({ type: 'self', ok });
+  record(ok, []);
+  renderProblem(); renderFeedback(); renderSolution();
+  $('nextBtn').focus();
+}
+function attachPhoto(file) {
+  const err = $('answerErr');
+  if (!file) return;
+  if (!file.type.startsWith('image/')) { err.textContent = t('photoErrType'); return; }
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => {
+    const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
+    c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    state.photo = c.toDataURL('image/jpeg', 0.82); err.textContent = ''; renderPhoto();
+  };
+  img.onerror = () => { URL.revokeObjectURL(url); err.textContent = t('photoErrRead'); };
+  img.src = url;
+}
+function showHint() { if (!state.p || state.fb.some(f => f.type === 'hint')) return; state.fb.unshift({ type: 'hint' }); renderFeedback(); }
+function showSolution() {
+  const p = state.p; if (!p) return;
+  if (!state.attempted && !state.solved) { state.viewed = true; state.attempted = true; record(false, []); state.fb.push({ type: 'viewed' }); renderFeedback(); renderProblem(); }
+  state.revealed = Math.max(state.revealed, 1); renderSolution();
+  $('solution').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+}
+let toastTimer;
+function toast(msg) { const el = $('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2800); }
+
+/* theme */
+function effectiveTheme() { const d = document.documentElement.dataset.theme; return d || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); }
+function updateThemeBtn() { const dark = effectiveTheme() === 'dark'; $('themeIcon').setAttribute('href', dark ? '#ic-sun' : '#ic-moon'); $('themeBtn').setAttribute('aria-label', dark ? t('toLight') : t('toDark')); }
+const savedTheme = store.get('smpg-theme', null); if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+
+/* ---------- events ---------- */
+$('answerForm').addEventListener('submit', submit);
+$('photoBtn').addEventListener('click', () => $('photoInput').click());
+$('photoInput').addEventListener('change', e => attachPhoto(e.target.files[0]));
+$('photoRemoveBtn').addEventListener('click', () => { state.photo = null; $('photoInput').value = ''; renderPhoto(); });
+$('feedback').addEventListener('click', e => { const b = e.target.closest('[data-self]'); if (b) selfGrade(b.dataset.self === '1'); });
+$('hintBtn').addEventListener('click', showHint);
+$('solBtn').addEventListener('click', showSolution);
+$('nextBtn').addEventListener('click', () => { newProblem(); $('answerInput').focus(); });
+$('stepBtn').addEventListener('click', () => { state.revealed++; renderSolution(); });
+$('allStepsBtn').addEventListener('click', () => { state.revealed = state.p.steps.length + 1; renderSolution(); });
+$('langBtn').addEventListener('click', () => { state.lang = state.lang === 'th' ? 'en' : 'th'; store.set('smpg-lang', state.lang); renderAll(); });
+$('themeBtn').addEventListener('click', () => { const n = effectiveTheme() === 'dark' ? 'light' : 'dark'; document.documentElement.dataset.theme = n; store.set('smpg-theme', n); updateThemeBtn(); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', updateThemeBtn);
+$('settings').addEventListener('click', e => {
+  const S = state.settings, sb = e.target.closest('[data-subj]'), gb = e.target.closest('[data-grade]');
+  if (sb) { S.subjects[sb.dataset.subj] = !S.subjects[sb.dataset.subj]; }
+  else if (gb) { const g = +gb.dataset.grade; S.grades = S.grades.includes(g) ? S.grades.filter(x => x !== g) : [...S.grades, g]; }
+  else if (e.target.id === 'allTopics') S.off = [];
+  else if (e.target.id === 'noTopics') S.off = GENERATORS.map(g => g.id);
+  else return;
+  saveSettings(); renderSettings();
+  if (!state.p || !enabledTopics().some(g => g.id === state.p.topicId)) newProblem();
+});
+$('settings').addEventListener('change', e => {
+  const S = state.settings, el = e.target;
+  if (el.name === 'diff') { S.diff = el.value; saveSettings(); newProblem(); }
+  else if (el.dataset.topic) { const id = el.dataset.topic; S.off = el.checked ? S.off.filter(x => x !== id) : [...S.off, id]; saveSettings(); if (!state.p || !enabledTopics().some(g => g.id === state.p.topicId)) newProblem(); }
+  else if (el.id === 'weakToggle') { S.weak = el.checked; saveSettings(); if (S.weak && !GENERATORS.some(g => tStat(g.id)?.a)) toast(t('weakNone')); newProblem(); }
+});
+$('weakBtn').addEventListener('click', () => {
+  if (!GENERATORS.some(g => tStat(g.id)?.a)) { toast(t('weakNone')); return; }
+  state.settings.weak = true; saveSettings(); $('weakToggle').checked = true; toast(t('weakOn')); newProblem();
+  $('problemCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+});
+$('resetBtn').addEventListener('click', () => { if (!confirm(t('resetQ'))) return; state.stats = blankStats(); saveStats(); renderInsights(); renderProblem(); toast(t('resetDone')); });
+document.addEventListener('keydown', e => {
+  if (e.ctrlKey || e.metaKey || e.altKey || e.target.closest('input,select,textarea')) return;
+  const k = e.key.toLowerCase();
+  if (k === 'n') { e.preventDefault(); $('nextBtn').click(); }
+  else if (k === 'h') { e.preventDefault(); showHint(); }
+});
+
+renderAll();
+newProblem();
+</script>
+</body>
+</html>
