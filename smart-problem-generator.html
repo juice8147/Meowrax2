@@ -1207,7 +1207,11 @@ def({ id: 'gas', subject: 'physics', grades: [5], name: L('กฎของแก
 }});
 
 /* ---------- checking ---------- */
-function tolOf(p, v = p.answer) { return p.tol ?? Math.max(0.006, Math.abs(v) * 0.005); }
+function tolOf(p, v = p.answer) {
+  const a = Math.abs(v);
+  // the 0.006 floor shrinks for tiny nonzero values so 0 is never accepted for them
+  return p.tol ?? Math.max(a === 0 ? 0.006 : Math.min(0.006, a / 2), a * 0.005);
+}
 function build(g, lv) {
   const p = g.gen(lv);
   p.topicId = g.id; p.level = lv; p.subject = g.subject;
@@ -1221,8 +1225,11 @@ function build(g, lv) {
   return p;
 }
 function parseNum(s) {
-  s = String(s).trim().replace(/[−–]/g, '-').replace(/,/g, '').replace(/\s+/g, '');
+  s = String(s).trim().replace(/[−–]/g, '-').replace(/\s+/g, '');
   if (!s) return NaN;
+  // "1,500" is a thousands separator; "2,5" is a decimal comma
+  if (/^[-+]?\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
+  else if (/^[-+]?\d*,\d+$/.test(s)) s = s.replace(',', '.');
   const m = s.match(/^(-?\d+(?:\.\d+)?)\/(-?\d+(?:\.\d+)?)$/);
   if (m) { const d = +m[2]; return d === 0 ? NaN : +m[1] / d; }
   if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s)) return NaN;
@@ -1494,6 +1501,7 @@ function submit(e) {
   if (!raw.trim() && state.photo) {
     // photo only: no number to diagnose, so show the full solution and let the student self-grade
     err.textContent = ''; $('answerInput').removeAttribute('aria-invalid');
+    state.selfScores = !state.attempted; // a typed attempt was already scored; don't count the problem twice
     state.attempted = state.selfReview = true;
     state.fb = state.fb.filter(f => f.type === 'hint'); state.fb.push({ type: 'photo' });
     state.revealed = p.steps.length + 1;
@@ -1527,7 +1535,7 @@ function selfGrade(ok) {
   state.selfReview = false;
   if (ok) state.solved = true; else state.viewed = true;
   state.fb = state.fb.filter(f => f.type === 'hint'); state.fb.push({ type: 'self', ok });
-  record(ok, []);
+  if (state.selfScores) record(ok, []);
   renderProblem(); renderFeedback(); renderSolution();
   $('nextBtn').focus();
 }
@@ -1535,8 +1543,9 @@ function attachPhoto(file) {
   const err = $('answerErr');
   if (!file) return;
   if (!file.type.startsWith('image/')) { err.textContent = t('photoErrType'); return; }
-  const url = URL.createObjectURL(file), img = new Image();
+  const url = URL.createObjectURL(file), img = new Image(), prob = state.p;
   img.onload = () => {
+    if (state.p !== prob) { URL.revokeObjectURL(url); return; } // student moved on while it loaded
     const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas');
     c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
@@ -1579,8 +1588,8 @@ $('settings').addEventListener('click', e => {
   const S = state.settings, sb = e.target.closest('[data-subj]'), gb = e.target.closest('[data-grade]');
   if (sb) { S.subjects[sb.dataset.subj] = !S.subjects[sb.dataset.subj]; }
   else if (gb) { const g = +gb.dataset.grade; S.grades = S.grades.includes(g) ? S.grades.filter(x => x !== g) : [...S.grades, g]; }
-  else if (e.target.id === 'allTopics') S.off = [];
-  else if (e.target.id === 'noTopics') S.off = GENERATORS.map(g => g.id);
+  else if (e.target.id === 'allTopics') { const v = visibleTopics().map(g => g.id); S.off = S.off.filter(id => !v.includes(id)); }
+  else if (e.target.id === 'noTopics') S.off = [...new Set([...S.off, ...visibleTopics().map(g => g.id)])];
   else return;
   saveSettings(); renderSettings();
   if (!state.p || !enabledTopics().some(g => g.id === state.p.topicId)) newProblem();
